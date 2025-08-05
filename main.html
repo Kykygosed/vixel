@@ -305,6 +305,33 @@
   pointer-events: none;
 "></div>
 
+<div id="toolButtons" style="
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9999;
+">
+  <button id="brushButton" title="Mode pinceau" style="
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  ">
+    <img src="brush.png" alt="Brush" style="width: 40px; height: 40px;" />
+  </button>
+  <button id="defaultButton" title="Mode normal" style="
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  ">
+    <img src="default.png" alt="Default" style="width: 40px; height: 40px;" />
+  </button>
+</div>
 
 
 
@@ -615,6 +642,25 @@ document.addEventListener("mousemove", (e) => {
     timestamp: Date.now()
   });
 });
+let pixelPlacementEnabled = true; // par défaut : placement activé
+
+const brushBtn = document.getElementById("brushButton");
+const defaultBtn = document.getElementById("defaultButton");
+const hotbar = document.querySelector(".color-hotbar");
+
+brushBtn.addEventListener("click", () => {
+  pixelPlacementEnabled = true;
+  hotbar.style.display = "flex"; // affiche la hotbar
+  console.log("🎨 Mode pinceau activé");
+});
+
+defaultBtn.addEventListener("click", () => {
+  pixelPlacementEnabled = false;
+  hotbar.style.display = "none"; // masque la hotbar
+  selectedColor = null; // déselectionne la couleur
+  document.querySelectorAll('.color-slot').forEach(s => s.classList.remove('selected'));
+  console.log("🧱 Mode normal activé (placement désactivé)");
+});
 
 // Nettoyage à la déconnexion
 // Quand l'utilisateur ferme la page ou recharge
@@ -723,7 +769,8 @@ canvas.addEventListener("mousemove", (e) => {
 
 // Clic = placer pixel
 canvas.addEventListener("click", (e) => {
-  if (!selectedColor || !uid) return;
+  if (!pixelPlacementEnabled || !selectedColor || !uid) return;
+
 
   const x = Math.floor((e.offsetX - offsetX) / zoom);
   const y = Math.floor((e.offsetY - offsetY) / zoom);
