@@ -720,7 +720,9 @@ function sendMessage() {
 
 // Affichage en temps réel
 const chatMessages = document.getElementById("chatMessages");
-firebase.database().ref("chat").limitToLast(50).on("child_added", snapshot => {
+const maxMessages = 5;
+
+firebase.database().ref("chat").limitToLast(20).on("child_added", snapshot => {
   const data = snapshot.val();
 
   const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
@@ -733,7 +735,12 @@ firebase.database().ref("chat").limitToLast(50).on("child_added", snapshot => {
   line.textContent = `[${time}] ${data.pseudo} : ${data.message}`;
   chatMessages.appendChild(line);
 
-  // Scroll auto vers le bas
+  // ❌ Supprimer les anciens messages si on dépasse 5 visibles
+  while (chatMessages.children.length > maxMessages) {
+    chatMessages.removeChild(chatMessages.firstChild);
+  }
+
+  // Scroll automatique en bas
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
