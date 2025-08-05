@@ -124,6 +124,42 @@
   border-radius: 6px;
   cursor: pointer;
 }
+/* Curseur custom */
+body {
+  cursor: url('cursor.png'), auto;
+}
+
+/* Palette */
+.color-palette {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.color-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 4px rgba(0,0,0,0.5);
+  cursor: pointer;
+  transition: transform 0.2s, border 0.2s;
+}
+
+.color-swatch.selected {
+  transform: scale(1.2);
+  border: 2px solid black;
+}
+
+/* Couleurs */
+.color-swatch.red { background-color: red; }
+.color-swatch.yellow { background-color: yellow; }
+.color-swatch.blue { background-color: blue; }
+.color-swatch.green { background-color: green; }
+.color-swatch.purple { background-color: purple; }
 
   </style>
 </head>
@@ -154,6 +190,13 @@
     <!-- Offres injectées ici -->
     <button onclick="closeShop()" style="margin-top: 20px;">Fermer</button>
   </div>
+</div>
+<div class="color-palette">
+  <div class="color-swatch red" data-color="red"></div>
+  <div class="color-swatch yellow" data-color="yellow"></div>
+  <div class="color-swatch blue" data-color="blue"></div>
+  <div class="color-swatch green" data-color="green"></div>
+  <div class="color-swatch purple" data-color="purple"></div>
 </div>
 
 
@@ -329,6 +372,21 @@
       alert("Achat réussi !");
     });
   }
+let selectedColor = null;
+
+document.querySelectorAll('.color-swatch').forEach(swatch => {
+  swatch.addEventListener('click', () => {
+    // Retirer la sélection précédente
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+
+    // Sélectionner la nouvelle couleur
+    swatch.classList.add('selected');
+    selectedColor = swatch.dataset.color;
+
+    console.log("Couleur sélectionnée :", selectedColor);
+    // Tu peux maintenant utiliser `selectedColor` dans ton code où tu veux
+  });
+});
 
 
 
