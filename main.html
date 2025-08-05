@@ -213,7 +213,6 @@
 </div>
 
 <canvas id="pixelCanvas" width="1000" height="1000" style="border:1px solid #000; display: block; margin: auto; background: white;"></canvas>
-<div id="cursors" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999;"></div>
 
 
 
@@ -396,58 +395,6 @@
       alert("Achat réussi !");
     });
   }
-const cursorsContainer = document.getElementById("cursors");
-const myUID = firebase.auth().currentUser.uid;
-
-// 1. Envoyer position de la souris en temps réel
-document.addEventListener("mousemove", (e) => {
-  const x = e.clientX;
-  const y = e.clientY;
-  firebase.database().ref(`accounts/${myUID}/cursor`).set({ x, y });
-});
-
-// 2. Écouter tous les curseurs (sauf le tien) et les afficher
-firebase.database().ref("accounts").on("value", (snapshot) => {
-  const accounts = snapshot.val() || {};
-  cursorsContainer.innerHTML = "";
-
-  for (const uid in accounts) {
-    if (uid === myUID) continue;
-
-    const user = accounts[uid];
-    if (!user.cursor || !user.pseudo) continue;
-
-    const { x, y } = user.cursor;
-    const pseudo = user.pseudo;
-
-    // Curseur (image)
-    const cursorImg = document.createElement("img");
-    cursorImg.src = "cursor.png";
-    cursorImg.style.position = "absolute";
-    cursorImg.style.left = x + "px";
-    cursorImg.style.top = y + "px";
-    cursorImg.style.width = "24px";
-    cursorImg.style.height = "24px";
-    cursorImg.style.transform = "translate(-50%, -50%)";
-    cursorImg.style.zIndex = "1";
-
-    // Pseudo
-    const label = document.createElement("div");
-    label.innerText = pseudo;
-    label.style.position = "absolute";
-    label.style.left = x + "px";
-    label.style.top = (y - 20) + "px";
-    label.style.transform = "translate(-50%, -100%)";
-    label.style.color = "white";
-    label.style.fontSize = "12px";
-    label.style.fontWeight = "bold";
-    label.style.textShadow = "0 0 3px black";
-    label.style.zIndex = "2";
-
-    cursorsContainer.appendChild(cursorImg);
-    cursorsContainer.appendChild(label);
-  }
-});
 
 let selectedColor = null;
 
