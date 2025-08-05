@@ -308,58 +308,59 @@
     shopPopup.style.display = "none";
   }
 
-  function loadOffers() {
-    const offersContainer = document.getElementById("offersContainer");
-    offersContainer.innerHTML = ""; // On vide les anciennes offres
+ function loadOffers() {
+  const offersContainer = document.getElementById("offersContainer");
+  offersContainer.innerHTML = ""; // On vide les anciennes offres
 
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Fermer";
-    closeBtn.style.marginTop = "20px";
-    closeBtn.onclick = closeShop;
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "Fermer";
+  closeBtn.style.marginTop = "20px";
+  closeBtn.onclick = closeShop;
 
-    firebase.database().ref("offers").once("value").then(snapshot => {
-      const offers = snapshot.val();
+  firebase.database().ref("offers").once("value").then(snapshot => {
+    const offers = snapshot.val();
 
-      if (!offers) {
-        const noOffer = document.createElement("div");
-        noOffer.textContent = "Aucune offre disponible.";
-        noOffer.style.textAlign = "center";
-        offersContainer.appendChild(noOffer);
-        offersContainer.appendChild(closeBtn);
-        return;
-      }
-
-      for (const offerId in offers) {
-        const offer = offers[offerId];
-
-        const offerDiv = document.createElement("div");
-        offerDiv.className = "offer";
-
-        const title = document.createElement("div");
-        title.textContent = ${offer.pixels} PIXELS;
-
-        const cost = document.createElement("div");
-        cost.textContent = Coût : ${offer.cost} VIX;
-
-        const img = document.createElement("img");
-        img.src = offer.image;
-        img.alt = ${offer.pixels} Pixels;
-
-        const buyBtn = document.createElement("button");
-        buyBtn.textContent = "Acheter";
-        buyBtn.onclick = () => buyPixels(offer.pixels, offer.cost);
-
-        offerDiv.appendChild(title);
-        offerDiv.appendChild(cost);
-        offerDiv.appendChild(img);
-        offerDiv.appendChild(buyBtn);
-
-        offersContainer.appendChild(offerDiv);
-      }
-
+    if (!offers) {
+      const noOffer = document.createElement("div");
+      noOffer.textContent = "Aucune offre disponible.";
+      noOffer.style.textAlign = "center";
+      offersContainer.appendChild(noOffer);
       offersContainer.appendChild(closeBtn);
-    });
-  }
+      return;
+    }
+
+    for (const offerId in offers) {
+      const offer = offers[offerId];
+
+      const offerDiv = document.createElement("div");
+      offerDiv.className = "offer";
+
+      const title = document.createElement("div");
+      title.textContent = `${offer.pixels} PIXELS`;
+
+      const cost = document.createElement("div");
+      cost.textContent = `Coût : ${offer.cost} VIX`;
+
+      const img = document.createElement("img");
+      img.src = offer.image;
+      img.alt = `${offer.pixels} Pixels`;
+
+      const buyBtn = document.createElement("button");
+      buyBtn.textContent = "Acheter";
+      buyBtn.onclick = () => buyPixels(offer.pixels, offer.cost);
+
+      offerDiv.appendChild(title);
+      offerDiv.appendChild(cost);
+      offerDiv.appendChild(img);
+      offerDiv.appendChild(buyBtn);
+
+      offersContainer.appendChild(offerDiv);
+    }
+
+    offersContainer.appendChild(closeBtn);
+  });
+}
+
 
   function buyPixels(pixelsToAdd, vixCost) {
     const userRef = firebase.database().ref("users/" + discordId + "/balance");
