@@ -1027,20 +1027,29 @@ window.addEventListener("resize", () => {
 function sendMessage() {
   const input = document.getElementById("chatInput");
   const message = input.value.trim();
-  if (message === "" || !uid) return;
 
-  firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap => {
-    const pseudo = snap.val() || "???";
+  if (!message) return;
 
-    firebase.database().ref("chat").push({
-      pseudo,
-      message,
-      timestamp: Date.now()
-    });
-
+  // 🔴 Gérer /help localement sans envoyer à Firebase
+  if (message === "/help") {
+    const line = document.createElement("div");
+    line.innerHTML = `<span style="color: red;">Aucune commande disponible pour l'instant.</span>`;
+    chatMessages.appendChild(line);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
     input.value = "";
+    return;
+  }
+
+  // 🔽 Envoi normal sinon
+  firebase.database().ref("chat").push({
+    pseudo: localPseudo,
+    message: message,
+    timestamp: Date.now()
   });
+
+  input.value = "";
 }
+
 
 const chatMessages = document.getElementById("chatMessages");
 const maxMessages = 5;
