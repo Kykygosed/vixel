@@ -8,6 +8,7 @@
       margin: 0;
       font-family: 'Press Start 2P', cursive;
       background: #f0f0f0;
+      cursor: url('cursor.png'), auto;
     }
     .topbar {
       display: flex;
@@ -125,41 +126,50 @@
   cursor: pointer;
 }
 /* Curseur custom */
-body {
-  cursor: url('cursor.png'), auto;
-}
 
-/* Palette */
-.color-palette {
+
+
+/* Hotbar de couleur */
+.color-hotbar {
   position: fixed;
   bottom: 20px;
-  left: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 20, 0.7);
+  padding: 10px 15px;
+  border-radius: 15px;
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
   z-index: 1000;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
 }
 
-.color-swatch {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+/* Chaque couleur dans la hotbar */
+.color-slot {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   border: 2px solid white;
-  box-shadow: 0 0 4px rgba(0,0,0,0.5);
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.4);
   cursor: pointer;
-  transition: transform 0.2s, border 0.2s;
+  transition: transform 0.2s ease, border 0.2s ease;
 }
 
-.color-swatch.selected {
+.color-slot.selected {
   transform: scale(1.2);
-  border: 2px solid black;
+  border: 3px solid gold;
+  box-shadow: 0 0 10px gold;
 }
 
 /* Couleurs */
-.color-swatch.red { background-color: red; }
-.color-swatch.yellow { background-color: yellow; }
-.color-swatch.blue { background-color: blue; }
-.color-swatch.green { background-color: green; }
-.color-swatch.purple { background-color: purple; }
+.color-slot.red { background-color: red; }
+.color-slot.yellow { background-color: yellow; }
+.color-slot.blue { background-color: blue; }
+.color-slot.green { background-color: green; }
+.color-slot.purple { background-color: purple; }
+
 
   </style>
 </head>
@@ -191,13 +201,14 @@ body {
     <button onclick="closeShop()" style="margin-top: 20px;">Fermer</button>
   </div>
 </div>
-<div class="color-palette">
-  <div class="color-swatch red" data-color="red"></div>
-  <div class="color-swatch yellow" data-color="yellow"></div>
-  <div class="color-swatch blue" data-color="blue"></div>
-  <div class="color-swatch green" data-color="green"></div>
-  <div class="color-swatch purple" data-color="purple"></div>
+<div class="color-hotbar">
+  <div class="color-slot red" data-color="red"></div>
+  <div class="color-slot yellow" data-color="yellow"></div>
+  <div class="color-slot blue" data-color="blue"></div>
+  <div class="color-slot green" data-color="green"></div>
+  <div class="color-slot purple" data-color="purple"></div>
 </div>
+
 
 
 
