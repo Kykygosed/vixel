@@ -45,7 +45,7 @@
     <h2>Connexion / Inscription</h2>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Mot de passe">
-    <button onclick="login()">Connexion / Inscription</button>
+    <button id="loginBtn">Connexion / Inscription</button>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -53,7 +53,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script type="module">
-  // Configuration Firebase
+  // Config Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
     authDomain: "kychat-45596.firebaseapp.com",
@@ -64,30 +64,38 @@
     appId: "1:104462848972:web:7ac49e63008e9a11150369"
   };
 
-  // Initialisation
+  // Init Firebase
   firebase.initializeApp(firebaseConfig);
 
-  // ⚡ Vérifie si un utilisateur est déjà connecté
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      const uid = user.uid;
-      const linkRef = firebase.database().ref("accounts/" + uid + "/link");
+  // Récupération du bouton
+  const loginBtn = document.getElementById("loginBtn");
 
-      linkRef.once("value").then(snapshot => {
-        const discordId = snapshot.val();
-        if (discordId) {
-          // 🔁 Déjà lié → va directement à main.html
-          window.location.href = "main.html";
-        } else {
-          // ❗ Non lié → va à link.html
-          window.location.href = "link.html";
-        }
-      }).catch(err => {
-        console.error("Erreur lors de la vérification du lien Discord :", err);
-      });
+  loginBtn.addEventListener("click", async () => {
+    try {
+      // 🔐 Ouvre popup de connexion
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const result = await firebase.auth().signInWithPopup(provider);
+      const user = result.user;
+
+      // 🔎 Vérifie si un lien Discord existe
+      const uid = user.uid;
+      const linkSnap = await firebase.database().ref("accounts/" + uid + "/link").once("value");
+
+      if (linkSnap.exists()) {
+        // ✅ Lien Discord présent → va à main.html
+        window.location.href = "main.html";
+      } else {
+        // ❌ Pas encore lié → va à link.html
+        window.location.href = "link.html";
+      }
+
+    } catch (error) {
+      console.error("Erreur lors de la connexion :", error);
+      alert("Erreur de connexion.");
     }
   });
 </script>
+
 
 </body>
 </html>
