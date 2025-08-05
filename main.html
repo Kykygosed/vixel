@@ -168,8 +168,6 @@
 .color-slot.yellow { background-color: yellow; }
 .color-slot.blue { background-color: blue; }
 .color-slot.green { background-color: green; }
-.color-slot.black { background-color: black; }
-.color-slot.white { background-color: white; }
 .color-slot.purple { background-color: purple; }
 
 
@@ -406,79 +404,99 @@ document.querySelectorAll('.color-slot').forEach(slot => {
 const canvas = document.getElementById("pixelCanvas");
 const ctx = canvas.getContext("2d");
 
-const gridWidth = 1000;
-const gridHeight = 1000;
-const pixelSize = 10;
+const mapSize = 500;
+const virtualPixelSize = 1; // taille logique d’un pixel = 1x1
+let zoom = 10; // affichage initial : chaque pixel fait 10px à l’écran
 
-let offsetX = 0;
-let offsetY = 0;
-let zoom = 1;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let offsetX = canvas.width / 2 - (mapSize * virtualPixelSize * zoom) / 2;
+let offsetY = canvas.height / 2 - (mapSize * virtualPixelSize * zoom) / 2;
 
 let isDragging = false;
-let dragStartX, dragStartY;
+let dragStartX = 0;
+let dragStartY = 0;
 
-// Déplacement souris pour déplacer la grille
-canvas.addEventListener("mousedown", (e) => {
-  isDragging = true;
-  dragStartX = e.offsetX;
-  dragStartY = e.offsetY;
-});
-canvas.addEventListener("mouseup", () => {
-  isDragging = false;
-});
-canvas.addEventListener("mousemove", (e) => {
-  if (isDragging) {
-    offsetX += (e.offsetX - dragStartX);
-    offsetY += (e.offsetY - dragStartY);
-    dragStartX = e.offsetX;
-    dragStartY = e.offsetY;
-    drawPixels();
+const pixels = {}; // Stock local
+
+// Fonction de rendu
+function drawPixels() {
+  // 1. Fond noir partout
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 2. Zone blanche de 500x500 pixels (la carte)
+  const mapScreenX = offsetX;
+  const mapScreenY = offsetY;
+  const mapScreenSize = mapSize * zoom;
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(mapScreenX, mapScreenY, mapScreenSize, mapScreenSize);
+
+  // 3. Dessin des pixels dans la map uniquement
+  for (let key in pixels) {
+    const [x, y] = key.split(":").map(Number);
+    const color = pixels[key];
+
+    if (x < 0 || x >= mapSize || y < 0 || y >= mapSize) continue;
+
+    const screenX = x * zoom + offsetX;
+    const screenY = y * zoom + offsetY;
+
+    if (
+      screenX + zoom < 0 || screenY + zoom < 0 ||
+      screenX > canvas.width || screenY > canvas.height
+    ) continue;
+
+    ctx.fillStyle = color;
+    ctx.fillRect(screenX, screenY, zoom, zoom);
   }
-});
+}
 
-// Zoom avec la molette
+// Zoom à la molette
 canvas.addEventListener("wheel", (e) => {
   e.preventDefault();
   const scale = e.deltaY < 0 ? 1.1 : 0.9;
+
+  const mouseX = e.offsetX;
+  const mouseY = e.offsetY;
+
+  offsetX = mouseX - (mouseX - offsetX) * scale;
+  offsetY = mouseY - (mouseY - offsetY) * scale;
+
   zoom *= scale;
   drawPixels();
 });
 
-// Clic sur le canvas pour placer un pixel
-canvas.addEventListener("click", (e) => {
-  if (!selectedColor) {
-    alert("Sélectionne une couleur !");
-    return;
+// Drag
+canvas.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+});
+canvas.addEventListener("mouseup", () => isDragging = false);
+canvas.addEventListener("mouseleave", () => isDragging = false);
+canvas.addEventListener("mousemove", (e) => {
+  if (isDragging) {
+    offsetX += e.clientX - dragStartX;
+    offsetY += e.clientY - dragStartY;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    drawPixels();
   }
-
-  const x = Math.floor((e.offsetX - offsetX) / (pixelSize * zoom));
-  const y = Math.floor((e.offsetY - offsetY) / (pixelSize * zoom));
-
-  placePixel(x, y, selectedColor);
 });
 
-// Dessin des pixels existants
-const pixels = {};
+// Clic = placer pixel
+canvas.addEventListener("click", (e) => {
+  if (!selectedColor || !uid) return;
 
-function drawPixels() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const x = Math.floor((e.offsetX - offsetX) / zoom);
+  const y = Math.floor((e.offsetY - offsetY) / zoom);
 
-  for (let key in pixels) {
-    const [x, y] = key.split(":").map(Number);
-    const color = pixels[key];
-    ctx.fillStyle = color;
-    ctx.fillRect(
-      x * pixelSize * zoom + offsetX,
-      y * pixelSize * zoom + offsetY,
-      pixelSize * zoom,
-      pixelSize * zoom
-    );
-  }
-}
+  if (x < 0 || x >= mapSize || y < 0 || y >= mapSize) return;
 
-// Sauvegarde le pixel dans Firebase
-function placePixel(x, y, color) {
-  const coordKey = `${x}:${y}`;
+  const key = `${x}:${y}`;
   const pixelRef = firebase.database().ref("accounts/" + uid + "/pixels");
 
   pixelRef.once('value').then(snap => {
@@ -488,30 +506,33 @@ function placePixel(x, y, color) {
       return;
     }
 
-    // Décrémente
     pixelRef.set(currentPixels - 1);
-
-    // Place le pixel
-    firebase.database().ref("pixels/" + coordKey).set({
-      color: color,
+    firebase.database().ref("pixels/" + key).set({
+      color: selectedColor,
       placedBy: uid,
       timestamp: Date.now()
     });
   });
-}
+});
 
-// Sync Firebase en temps réel
-firebase.database().ref("pixels").on("child_added", (snapshot) => {
+// Mise à jour live des pixels
+firebase.database().ref("pixels").on("child_added", snapshot => {
+  const key = snapshot.key;
+  const data = snapshot.val();
+  pixels[key] = data.color;
+  drawPixels();
+});
+firebase.database().ref("pixels").on("child_changed", snapshot => {
   const key = snapshot.key;
   const data = snapshot.val();
   pixels[key] = data.color;
   drawPixels();
 });
 
-firebase.database().ref("pixels").on("child_changed", (snapshot) => {
-  const key = snapshot.key;
-  const data = snapshot.val();
-  pixels[key] = data.color;
+// Resize auto
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
   drawPixels();
 });
 
