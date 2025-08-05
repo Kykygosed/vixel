@@ -6,7 +6,7 @@
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: 'Press Start 2P', cursive;
       background: #f0f0f0;
     }
     .topbar {
@@ -22,26 +22,34 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 16px;
+      font-size: 12px; /* un peu plus petit car la police est grande */
     }
     .presence img {
       width: 24px;
       height: 24px;
     }
     .shop-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       cursor: pointer;
-      width: 32px;
-      height: 32px;
+      font-size: 12px;
+      user-select: none;
+      color: white;
+    }
+    .shop-btn img {
+      width: 24px;
+      height: 24px;
     }
     .vix-container {
-      background: #888888cc; /* rectangle gris transparent */
+      background: #888888cc;
       display: flex;
       align-items: center;
       gap: 6px;
       padding: 4px 10px;
       border-radius: 6px;
       font-weight: bold;
-      font-size: 16px;
+      font-size: 12px;
     }
     .vix-container img {
       width: 24px;
@@ -50,12 +58,17 @@
   </style>
 </head>
 <body>
-  <div class="topbar">
+   <div class="topbar">
     <div class="presence">
       <img src="online.png" alt="Online" />
       <span id="onlineCount">0</span>
     </div>
-    <img src="shop.png" alt="Boutique" class="shop-btn" title="Boutique" />
+
+    <div class="shop-btn" onclick="alert('Ouvre la boutique ici !')">
+      <img src="shop.png" alt="Boutique" />
+      <span>Boutique</span>
+    </div>
+
     <div class="vix-container">
       <img src="vix.png" alt="VIX" />
       <span id="vixCount">0 VIX</span>
