@@ -209,6 +209,7 @@
   <div class="color-slot purple" data-color="purple"></div>
 </div>
 
+<div id="pixelCanvas" style="display: grid; grid-template-columns: repeat(16, 20px); grid-template-rows: repeat(16, 20px); gap: 1px; margin: 20px auto; width: fit-content;"></div>
 
 
 
@@ -399,6 +400,68 @@ document.querySelectorAll('.color-slot').forEach(slot => {
   });
 });
 
+const pixelCanvas = document.getElementById('pixelCanvas');
+const gridSize = 16; // 16x16 pixels grid, tu peux augmenter
+
+// Création des pixels dans la grille
+for(let i=0; i<gridSize*gridSize; i++) {
+  const pixel = document.createElement('div');
+  pixel.style.width = '20px';
+  pixel.style.height = '20px';
+  pixel.style.backgroundColor = '#fff';
+  pixel.style.border = '1px solid #ccc';
+  pixel.style.boxSizing = 'border-box';
+  pixel.dataset.index = i;
+  pixel.style.cursor = 'pointer';
+
+  pixel.addEventListener('click', () => {
+    if (selectedColor === null) {
+      alert('Sélectionne une couleur dans la hotbar !');
+      return;
+    }
+    placePixel(i, selectedColor);
+  });
+
+  pixelCanvas.appendChild(pixel);
+}
+
+// Fonction pour placer un pixel (si tu as assez de pixels)
+function placePixel(index, color) {
+  // Récupère le compteur actuel de pixels (le nombre de "coins" que tu peux dépenser)
+  const pixelRef = firebase.database().ref("accounts/" + uid + "/pixels");
+
+  pixelRef.once('value').then(snap => {
+    let currentPixels = snap.val() || 0;
+    if (currentPixels <= 0) {
+      alert("Tu n'as plus de pixels à placer !");
+      return;
+    }
+
+    // Décrémente le compteur
+    pixelRef.set(currentPixels - 1);
+
+    // Sauvegarde la couleur dans la base pour ce pixel
+    firebase.database().ref("pixels/" + index).set({
+      color: color,
+      placedBy: uid,
+      timestamp: Date.now()
+    });
+  });
+}
+
+// Ecoute en temps réel les changements de tous les pixels pour les afficher
+firebase.database().ref("pixels").on("value", snapshot => {
+  const pixelsData = snapshot.val() || {};
+
+  for(let i=0; i<gridSize*gridSize; i++) {
+    const pixel = pixelCanvas.children[i];
+    if(pixelsData[i] && pixelsData[i].color) {
+      pixel.style.backgroundColor = pixelsData[i].color;
+    } else {
+      pixel.style.backgroundColor = '#fff'; // pixel vide
+    }
+  }
+});
 
 
 
