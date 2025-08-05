@@ -1,68 +1,155 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Lier compte Discord</title>
+  <meta charset="UTF-8" />
+  <title>Liez votre compte</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
-    body {
-      font-family: sans-serif;
-      background: #eef2f3;
+    /* Reset & font */
+    * {
+      box-sizing: border-box;
+    }
+    body, html {
+      margin: 0; padding: 0; height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: #0f1218;
+      color: #e1e3e6;
+      overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
     }
+
+    /* Animated gradient background */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(270deg, #7289da, #99aab5, #2c2f33, #23272a);
+      background-size: 800% 800%;
+      animation: gradientBG 15s ease infinite;
+      z-index: -1;
+      filter: brightness(0.5);
+    }
+    @keyframes gradientBG {
+      0% {background-position:0% 50%;}
+      50% {background-position:100% 50%;}
+      100% {background-position:0% 50%;}
+    }
+
     .box {
-      background: white;
-      padding: 40px;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      background: #181a20;
+      padding: 40px 50px;
+      border-radius: 15px;
+      box-shadow: 0 8px 30px rgba(114, 137, 218, 0.6);
       width: 400px;
       text-align: center;
+      position: relative;
     }
+
     h1 {
-      font-size: 24px;
+      font-weight: 600;
+      font-size: 28px;
+      margin-bottom: 25px;
+      color: #fff;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px #7289da88;
     }
+
     p {
-      font-size: 14px;
-      color: #444;
+      font-size: 15px;
+      color: #b9bbbe;
+      line-height: 1.5;
+      margin: 10px 0 18px;
     }
+
     .highlight {
-      background: #ddd;
-      padding: 8px 12px;
-      font-weight: bold;
+      background: #2c2f33;
+      padding: 10px 14px;
+      font-weight: 600;
       font-family: monospace;
       display: inline-block;
-      border-radius: 5px;
-      margin: 10px 0;
+      border-radius: 8px;
+      margin: 12px 0;
+      color: #dcddde;
+      user-select: text;
+      box-shadow: inset 0 0 8px #00000080;
     }
+
     input {
       width: 100%;
-      padding: 10px;
-      margin-top: 20px;
+      padding: 14px 18px;
+      margin-top: 12px;
       font-size: 16px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      background: #2c2f33;
+      color: #dcddde;
+      outline-offset: 2px;
+      box-shadow: inset 0 0 6px #00000060;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
+    input::placeholder {
+      color: #72767d;
+    }
+    input:focus {
+      border-color: #7289da;
+      box-shadow: 0 0 8px #7289daaa;
+      background: #32353b;
+    }
+
     button {
       width: 100%;
-      margin-top: 10px;
-      padding: 10px;
-      background: #28a745;
-      color: white;
-      font-size: 16px;
+      margin-top: 18px;
+      padding: 14px;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
+      background: #5865f2;
+      color: white;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: 1px;
       cursor: pointer;
+      box-shadow: 0 5px 15px #5865f2aa;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+    button::before {
+      content: "";
+      position: absolute;
+      left: -50%;
+      top: 0;
+      width: 200%;
+      height: 100%;
+      background: linear-gradient(120deg, transparent 30%, #a3bffa 50%, transparent 70%);
+      transform: skewX(-20deg);
+      transition: all 0.6s ease;
+      opacity: 0.5;
+      pointer-events: none;
+      animation: shimmer 2.5s infinite;
+    }
+    @keyframes shimmer {
+      0% { left: -50%; }
+      100% { left: 150%; }
+    }
+    button:hover {
+      background: #4752c4;
+      box-shadow: 0 8px 20px #4752c4cc;
     }
   </style>
 </head>
 <body>
-  <div class="box">
+  <div class="box" role="main" aria-label="Formulaire de liaison du compte Discord">
     <h1>Liez votre compte Discord</h1>
     <p>Dans le salon dédié aux commandes, faites la commande :</p>
     <div class="highlight">!link</div>
     <p>Le bot vous enverra une clé en MP. Copiez-collez la ici :</p>
-    <input type="text" id="discordId" placeholder="Clé reçue (votre ID Discord)">
-    <button onclick="linkDiscord()">Continuer !</button>
+    <input type="text" id="discordId" placeholder="Clé reçue (votre ID Discord)" autocomplete="off" aria-label="Clé reçue de Discord" />
+    <button onclick="linkDiscord()" aria-label="Lier le compte Discord">Continuer !</button>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -70,21 +157,20 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <script>
-    // 🔧 Même config que index.html
-const firebaseConfig = {
-  apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
-  authDomain: "kychat-45596.firebaseapp.com",
-  databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
-  projectId: "kychat-45596",
-  storageBucket: "kychat-45596.firebasestorage.app",
-  messagingSenderId: "104462848972",
-  appId: "1:104462848972:web:7ac49e63008e9a11150369"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
+      authDomain: "kychat-45596.firebaseapp.com",
+      databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
+      projectId: "kychat-45596",
+      storageBucket: "kychat-45596.firebasestorage.app",
+      messagingSenderId: "104462848972",
+      appId: "1:104462848972:web:7ac49e63008e9a11150369"
+    };
 
     firebase.initializeApp(firebaseConfig);
 
     function linkDiscord() {
-      const discordId = document.getElementById("discordId").value;
+      const discordId = document.getElementById("discordId").value.trim();
       const user = firebase.auth().currentUser;
 
       if (!discordId || !user) {
@@ -100,7 +186,6 @@ const firebaseConfig = {
         .catch(err => alert("Erreur : " + err.message));
     }
 
-    // S'assurer que l'utilisateur est bien connecté, sinon redirection
     firebase.auth().onAuthStateChanged(user => {
       if (!user) {
         window.location.href = "index.html";
