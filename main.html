@@ -213,7 +213,7 @@
 </div>
 
 <canvas id="pixelCanvas" width="1000" height="1000" style="border:1px solid #000; display: block; margin: auto; background: white;"></canvas>
-<div id="cursors" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 10000;"></div>
+<div id="cursors" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999;"></div>
 
 
 
@@ -396,54 +396,58 @@
       alert("Achat réussi !");
     });
   }
-const cursorsContainer = document.getElementById("cursors"); // Un conteneur HTML où tu affiches les curseurs
+const cursorsContainer = document.getElementById("cursors");
+const myUID = firebase.auth().currentUser.uid;
 
-function listenUsersPositions() {
-  const accountsRef = firebase.database().ref("accounts");
+// 1. Envoyer position de la souris en temps réel
+document.addEventListener("mousemove", (e) => {
+  const x = e.clientX;
+  const y = e.clientY;
+  firebase.database().ref(`accounts/${myUID}/cursor`).set({ x, y });
+});
 
-  accountsRef.on("value", snapshot => {
-    cursorsContainer.innerHTML = ""; // On reset les curseurs à chaque update
+// 2. Écouter tous les curseurs (sauf le tien) et les afficher
+firebase.database().ref("accounts").on("value", (snapshot) => {
+  const accounts = snapshot.val() || {};
+  cursorsContainer.innerHTML = "";
 
-    const users = snapshot.val();
+  for (const uid in accounts) {
+    if (uid === myUID) continue;
 
-    if (!users) return;
+    const user = accounts[uid];
+    if (!user.cursor || !user.pseudo) continue;
 
-    Object.entries(users).forEach(([uid, userData]) => {
-      if (!userData.position || !userData.pseudo) return;
+    const { x, y } = user.cursor;
+    const pseudo = user.pseudo;
 
-      // Ne pas afficher ton propre curseur
-      if (uid === firebase.auth().currentUser.uid) return;
+    // Curseur (image)
+    const cursorImg = document.createElement("img");
+    cursorImg.src = "cursor.png";
+    cursorImg.style.position = "absolute";
+    cursorImg.style.left = x + "px";
+    cursorImg.style.top = y + "px";
+    cursorImg.style.width = "24px";
+    cursorImg.style.height = "24px";
+    cursorImg.style.transform = "translate(-50%, -50%)";
+    cursorImg.style.zIndex = "1";
 
-      const { x, y } = userData.position;  // ou lat/lng selon ta structure
-      const pseudo = userData.pseudo;
+    // Pseudo
+    const label = document.createElement("div");
+    label.innerText = pseudo;
+    label.style.position = "absolute";
+    label.style.left = x + "px";
+    label.style.top = (y - 20) + "px";
+    label.style.transform = "translate(-50%, -100%)";
+    label.style.color = "white";
+    label.style.fontSize = "12px";
+    label.style.fontWeight = "bold";
+    label.style.textShadow = "0 0 3px black";
+    label.style.zIndex = "2";
 
-      // Créer un élément curseur
-      const cursor = document.createElement("div");
-      cursor.classList.add("cursor");
-      cursor.style.position = "absolute";
-      cursor.style.left = x + "px"; // adapter selon ton système de coordonnées
-      cursor.style.top = y + "px";
-      cursor.style.width = "20px";
-      cursor.style.height = "20px";
-      cursor.style.backgroundColor = "red";
-      cursor.style.borderRadius = "50%";
-      cursor.title = pseudo;
-
-      // Ajouter un label sous forme de tooltip ou texte
-      const label = document.createElement("span");
-      label.textContent = pseudo;
-      label.style.position = "absolute";
-      label.style.top = "22px";
-      label.style.left = "-10px";
-      label.style.color = "white";
-      label.style.fontSize = "12px";
-      label.style.textShadow = "0 0 2px black";
-      cursor.appendChild(label);
-
-      cursorsContainer.appendChild(cursor);
-    });
-  });
-}
+    cursorsContainer.appendChild(cursorImg);
+    cursorsContainer.appendChild(label);
+  }
+});
 
 let selectedColor = null;
 
