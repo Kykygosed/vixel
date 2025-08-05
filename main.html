@@ -290,6 +290,20 @@
     <button onclick="sendMessage()">Envoyer</button>
   </div>
 </div>
+<div id="pixelInfo" style="
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: none;
+  z-index: 9999;
+  pointer-events: none;
+"></div>
 
 
 
@@ -799,6 +813,43 @@ firebase.database().ref("chat").limitToLast(20).on("child_added", snapshot => {
 
   // Scroll automatique en bas
   chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+const pixelInfoBox = document.getElementById("pixelInfo");
+
+// Survol du canvas
+canvas.addEventListener("mousemove", async (e) => {
+  const x = Math.floor((e.offsetX - offsetX) / zoom);
+  const y = Math.floor((e.offsetY - offsetY) / zoom);
+
+  if (x < 0 || x >= mapSize || y < 0 || y >= mapSize) {
+    pixelInfoBox.style.display = "none";
+    return;
+  }
+
+  const key = `${x}:${y}`;
+  const pixelData = pixelsData[key]; // ⚠️ tu as déjà "pixelsData" à jour grâce à ton listener
+
+  if (!pixelData || !pixelData.placedBy) {
+    pixelInfoBox.style.display = "none";
+    return;
+  }
+
+  try {
+    // Récupération du pseudo depuis l’UUID
+    const snap = await firebase.database().ref("accounts/" + pixelData.placedBy + "/pseudo").once("value");
+    const pseudo = snap.val() || "???";
+
+    pixelInfoBox.textContent = `(${x}, ${y}) placé par ${pseudo}`;
+    pixelInfoBox.style.display = "block";
+  } catch (err) {
+    console.error("Erreur récupération pseudo:", err);
+    pixelInfoBox.style.display = "none";
+  }
+});
+
+// Si la souris sort du canvas → cacher l’infos
+canvas.addEventListener("mouseleave", () => {
+  pixelInfoBox.style.display = "none";
 });
 
   </script>
