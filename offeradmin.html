@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Créer une Offre</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f0f0f0;
+      padding: 40px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .form-container {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      background: #222;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .success {
+      margin-top: 15px;
+      text-align: center;
+      color: green;
+    }
+
+    .error {
+      margin-top: 15px;
+      text-align: center;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Créer une Offre</h1>
+  <div class="form-container">
+    <label for="offerId">ID de l'offre</label>
+    <input type="text" id="offerId" placeholder="ex: 1, 2, 3..." />
+
+    <label for="pixels">Nombre de pixels</label>
+    <input type="number" id="pixels" placeholder="ex: 100" />
+
+    <label for="cost">Coût en VIX</label>
+    <input type="number" id="cost" placeholder="ex: 50" />
+
+    <label for="image">URL de l'image</label>
+    <input type="text" id="image" placeholder="https://imgur.com/..." />
+
+    <button onclick="createOffer()">Créer l'offre</button>
+
+    <div id="message"></div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
+      authDomain: "kychat-45596.firebaseapp.com",
+      databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
+      projectId: "kychat-45596",
+      storageBucket: "kychat-45596.appspot.com",
+      messagingSenderId: "104462848972",
+      appId: "1:104462848972:web:7ac49e63008e9a11150369"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    function createOffer() {
+      const id = document.getElementById("offerId").value.trim();
+      const pixels = parseInt(document.getElementById("pixels").value.trim());
+      const cost = parseInt(document.getElementById("cost").value.trim());
+      const image = document.getElementById("image").value.trim();
+      const messageDiv = document.getElementById("message");
+
+      if (!id || isNaN(pixels) || isNaN(cost) || !image) {
+        messageDiv.innerHTML = "<div class='error'>Veuillez remplir tous les champs correctement.</div>";
+        return;
+      }
+
+      firebase.database().ref("offers/" + id).set({
+        pixels: pixels,
+        cost: cost,
+        image: image
+      }).then(() => {
+        messageDiv.innerHTML = "<div class='success'>✅ Offre créée avec succès !</div>";
+      }).catch((err) => {
+        messageDiv.innerHTML = "<div class='error'>❌ Erreur : " + err.message + "</div>";
+      });
+    }
+  </script>
+</body>
+</html>
