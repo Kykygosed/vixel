@@ -486,23 +486,13 @@ canvas.addEventListener("click", function(event) {
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
 
+    // Corriger la position en fonction du zoom et des offsets
     const x = Math.floor((mouseX - offsetX) / scale);
     const y = Math.floor((mouseY - offsetY) / scale);
 
     if (balance >= 10) {
-        const pixelPath = "pixels/" + x + "_" + y;
-        const pixelRef = firebase.database().ref(pixelPath);
-
-        // Placer le pixel avec les infos dans Firebase
-        pixelRef.set({
-            x,
-            y,
-            color: selectedColor,
-            placedBy: uid,
-            timestamp: Date.now()
-        });
-
-        // Décrémenter le nombre de pixels (ou la balance)
+        const pixelRef = firebase.database().ref("pixels/" + x + "_" + y);
+        pixelRef.set({ x, y, color: selectedColor });
         balance -= 10;
         updateBalance();
     } else {
@@ -510,6 +500,17 @@ canvas.addEventListener("click", function(event) {
     }
 });
 
+
+  // Placer le pixel
+  firebase.database().ref(pixelPath).set({
+    color: selectedColor,
+    placedBy: uid,
+    timestamp: Date.now()
+  });
+
+  // Décrémenter le compte de pixels
+  pixelRef.set(pixelCount - 1);
+});
 
 canvas.addEventListener("wheel", (e) => {
   e.preventDefault();
