@@ -218,7 +218,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <script>
-  const firebaseConfig = {
+const firebaseConfig = {
     apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
     authDomain: "kychat-45596.firebaseapp.com",
     databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
@@ -237,7 +237,6 @@
 let scale = 1;           // facteur de zoom
 let offsetX = 0;         // décalage X (pan)
 let offsetY = 0;         // décalage Y (pan)
-const BASE_PIXEL_SIZE = 10; // ou la taille de pixel que tu veux
 
 
   let uid, discordId, presenceRef;
@@ -343,14 +342,14 @@ const BASE_PIXEL_SIZE = 10; // ou la taille de pixel que tu veux
         offerDiv.className = "offer";
 
         const title = document.createElement("div");
-        title.textContent = `${offer.pixels} PIXELS`;
+        title.textContent = ${offer.pixels} PIXELS;
 
         const cost = document.createElement("div");
-        cost.textContent = `Coût : ${offer.cost} VIX`;
+        cost.textContent = Coût : ${offer.cost} VIX;
 
         const img = document.createElement("img");
         img.src = offer.image;
-        img.alt = `${offer.pixels} Pixels`;
+        img.alt = ${offer.pixels} Pixels;
 
         const buyBtn = document.createElement("button");
         buyBtn.textContent = "Acheter";
@@ -414,7 +413,10 @@ canvas.height = window.innerHeight;
 const PIXEL_SIZE = 10;
 
 // Zone chargée autour du joueur (en pixels)
+const VIEW_RANGE = 100;
 
+let offsetX = 0;
+let offsetY = 0;
 
 // Adapter le canvas en cas de redimensionnement
 window.addEventListener("resize", () => {
@@ -483,14 +485,16 @@ function isPixelVisible(x, y) {
 }
 
 canvas.addEventListener("click", async (e) => {
-  if (!selectedColor || isDragging) return;
+  if (!selectedColor) return;
 
-  const x = Math.floor((e.clientX + offsetX) / (BASE_PIXEL_SIZE * scale));
-  const y = Math.floor((e.clientY + offsetY) / (BASE_PIXEL_SIZE * scale));
+  const rect = canvas.getBoundingClientRect();
+const x = Math.floor((e.clientX / scale + offsetX - rect.left) / PIXEL_SIZE);
+const y = Math.floor((e.clientY / scale + offsetY - rect.top) / PIXEL_SIZE);
 
-  const pixelKey = ${x}_${y};
-  const pixelPath = pixels/${pixelKey};
 
+  const pixelPath = pixels/${x}_${y};
+
+  // Vérifie les pixels restants
   const pixelRef = firebase.database().ref(accounts/${uid}/pixels);
   const currentPixelSnap = await pixelRef.get();
   const pixelCount = currentPixelSnap.val() || 0;
@@ -500,7 +504,16 @@ canvas.addEventListener("click", async (e) => {
     return;
   }
 
+  // Placer le pixel
+  firebase.database().ref(pixelPath).set({
+    color: selectedColor,
+    placedBy: uid,
+    timestamp: Date.now()
+  });
 
+  // Décrémenter le compte de pixels
+  pixelRef.set(pixelCount - 1);
+});
 
 canvas.addEventListener("wheel", (e) => {
   e.preventDefault();
@@ -551,9 +564,6 @@ canvas.addEventListener("mouseup", () => {
 canvas.addEventListener("mouseleave", () => {
   isDragging = false;
 });
-
-
-
   </script>
 </body>
 </html>
