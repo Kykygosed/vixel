@@ -482,29 +482,23 @@ function isPixelVisible(x, y) {
   );
 }
 
-canvas.addEventListener("click", function(event) {
-  // Récupérer la position du canvas dans la page
-  const rect = canvas.getBoundingClientRect();
+canvas.addEventListener("click", async (e) => {
+  if (!selectedColor || isDragging) return;
 
-  // Calculer les coordonnées relatives au canvas
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
+  const x = Math.floor((e.clientX + offsetX) / (BASE_PIXEL_SIZE * scale));
+  const y = Math.floor((e.clientY + offsetY) / (BASE_PIXEL_SIZE * scale));
 
-  // Adapter selon le zoom et décalage
-  const canvasX = (x / scale) + offsetX;
-  const canvasY = (y / scale) + offsetY;
+  const pixelKey = ${x}_${y};
+  const pixelPath = pixels/${pixelKey};
 
-  // Calculer la position du pixel sur la grille
-  const pixelX = Math.floor(canvasX / BASE_PIXEL_SIZE) * BASE_PIXEL_SIZE;
-  const pixelY = Math.floor(canvasY / BASE_PIXEL_SIZE) * BASE_PIXEL_SIZE;
+  const pixelRef = firebase.database().ref(accounts/${uid}/pixels);
+  const currentPixelSnap = await pixelRef.get();
+  const pixelCount = currentPixelSnap.val() || 0;
 
-  // Dessiner le pixel à la position correcte
-  ctx.fillStyle = selectedColor || "black";
-  ctx.fillRect(pixelX, pixelY, BASE_PIXEL_SIZE, BASE_PIXEL_SIZE);
-
-  console.log("Pixel placé en:", pixelX, pixelY);
-});
-
+  if (pixelCount <= 0) {
+    alert("Tu n'as plus de pixels !");
+    return;
+  }
 
 
 
