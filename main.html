@@ -699,17 +699,30 @@ document.addEventListener("visibilitychange", () => {
 // Démarrage du minuteur après connexion
 startVixTimer();
 
-  function openShop() {
-    shopPopup.style.display = "flex";
-    loadOffers();
-  }
 
-  function closeShop() {
-    shopPopup.style.display = "none";
-  }
+function openShop() {
+  shopPopup.style.display = "flex";
+  loadOffers();
+}
 
- function loadOffers() {
-  const offersContainer = document.getElementById("offersContainer");
+function closeShop() {
+  shopPopup.style.display = "none";
+}
+
+// Gestion du clic en dehors du popup pour fermer
+const offersContainer = document.getElementById("offersContainer");
+
+// Clic sur le fond (popup) ferme
+shopPopup.addEventListener("click", () => {
+  closeShop();
+});
+
+// Clic dans le contenu n'agit pas (empêche la fermeture)
+offersContainer.addEventListener("click", (e) => {
+  e.stopPropagation();
+});
+
+function loadOffers() {
   offersContainer.innerHTML = ""; // On vide les anciennes offres
 
   const closeBtn = document.createElement("button");
@@ -761,8 +774,7 @@ startVixTimer();
   });
 }
 
-
-  function buyPixels(pixelsToAdd, vixCost) {
+function buyPixels(pixelsToAdd, vixCost) {
   // 1. Récupérer le lien vers l'ID de l'utilisateur (link)
   firebase.database().ref("accounts/" + uid + "/link").once("value").then(linkSnap => {
     const linkedId = linkSnap.val();
@@ -802,6 +814,7 @@ startVixTimer();
     alert("Une erreur est survenue pendant l'achat.");
   });
 }
+
 
 let selectedColor = null;
 
