@@ -149,28 +149,12 @@
     </div>
   </div>
 <div class="popup-overlay" id="shopPopup">
-  <div class="popup">
-    <div class="offer" data-pixels="100" data-cost="50">
-      <div>100 PIXELS</div>
-      <div>Coût : 50 VIX</div>
-      <img src="100.png" alt="100 Pixels">
-      <button onclick="buyPixels(100, 50)">Acheter</button>
-    </div>
-    <div class="offer" data-pixels="200" data-cost="100">
-      <div>200 PIXELS</div>
-      <div>Coût : 100 VIX</div>
-      <img src="200.png" alt="200 Pixels">
-      <button onclick="buyPixels(200, 100)">Acheter</button>
-    </div>
-    <div class="offer" data-pixels="300" data-cost="200">
-      <div>300 PIXELS</div>
-      <div>Coût : 150 VIX</div>
-      <img src="300.png" alt="300 Pixels">
-      <button onclick="buyPixels(300, 200)">Acheter</button>
-    </div>
+  <div class="popup" id="offersContainer">
+    <!-- Les offres seront injectées ici dynamiquement -->
     <button onclick="closeShop()" style="margin-top: 20px;">Fermer</button>
   </div>
 </div>
+
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -267,44 +251,70 @@ const shopPopup = document.getElementById("shopPopup");
 
 function openShop() {
   shopPopup.style.display = "flex";
+  loadOffers(); // On charge les offres à chaque ouverture
 }
 
 function closeShop() {
   shopPopup.style.display = "none";
 }
 
-// Écoute en temps réel du compteur de Pixels
-function listenPixels() {
-  firebase.database().ref("accounts/" + uid + "/pixels").on("value", snapshot => {
-    const pixels = snapshot.val();
-    pixelCountSpan.textContent = (pixels !== null ? pixels : 0) + " Pixels";
-  });
-}
+// Charge dynamiquement les offres depuis Firebase
+function loadOffers() {
+  const offersContainer = document.getElementById("offersContainer");
+  offersContainer.innerHTML = ""; // On vide les anciennes offres
 
-// Achat d'une offre
-function buyPixels(pixelsToAdd, vixCost) {
-  const userRef = firebase.database().ref("users/" + discordId + "/balance");
-  const pixelRef = firebase.database().ref("accounts/" + uid + "/pixels");
+  // Ajout du bouton "Fermer" à la fin
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "Fermer";
+  closeBtn.style.marginTop = "20px";
+  closeBtn.onclick = closeShop;
 
-  userRef.once("value").then(vixSnap => {
-    const currentVix = vixSnap.val() || 0;
+  // Récupération des offres depuis Firebase
+  firebase.database().ref("offers").once("value").then(snapshot => {
+    const offers = snapshot.val();
 
-    if (currentVix < vixCost) {
-      alert("Pas assez de VIX !");
+    if (!offers) {
+      const noOffer = document.createElement("div");
+      noOffer.textContent = "Aucune offre disponible.";
+      noOffer.style.textAlign = "center";
+      offersContainer.appendChild(noOffer);
+      offersContainer.appendChild(closeBtn);
       return;
     }
 
-    // Déduction des VIX et ajout des Pixels
-    userRef.set(currentVix - vixCost);
+    for (const offerId in offers) {
+      const offer = offers[offerId];
 
-    pixelRef.once("value").then(pixelSnap => {
-      const currentPixels = pixelSnap.val() || 0;
-      pixelRef.set(currentPixels + pixelsToAdd);
-    });
+      // Crée l'élément de l'offre
+      const offerDiv = document.createElement("div");
+      offerDiv.className = "offer";
 
-    alert("Achat réussi !");
+      const title = document.createElement("div");
+      title.textContent = `${offer.pixels} PIXELS`;
+
+      const cost = document.createElement("div");
+      cost.textContent = `Coût : ${offer.cost} VIX`;
+
+      const img = document.createElement("img");
+      img.src = offer.image;
+      img.alt = `${offer.pixels} Pixels`;
+
+      const buyBtn = document.createElement("button");
+      buyBtn.textContent = "Acheter";
+      buyBtn.onclick = () => buyPixels(offer.pixels, offer.cost);
+
+      offerDiv.appendChild(title);
+      offerDiv.appendChild(cost);
+      offerDiv.appendChild(img);
+      offerDiv.appendChild(buyBtn);
+
+      offersContainer.appendChild(offerDiv);
+    }
+
+    offersContainer.appendChild(closeBtn);
   });
 }
+
 
   </script>
 </body>
