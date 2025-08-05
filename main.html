@@ -242,33 +242,39 @@
   let uid, discordId, presenceRef;
 
   firebase.auth().onAuthStateChanged(async user => {
-    if (!user) {
-      window.location.href = "index.html";
+  if (!user) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  uid = user.uid;
+
+  try {
+    // Récupérer le pseudo ici
+    const pseudoSnap = await firebase.database().ref("accounts/" + uid + "/pseudo").once("value");
+    const pseudo = pseudoSnap.val();
+
+    if (!pseudo) {
+      alert("Aucun pseudo trouvé, merci de le configurer.");
+      // Optionnel : redirection ou autre gestion
       return;
     }
 
-    uid = user.uid;
+    // Si tu utilisais discordId pour d'autres choses, adapte ici
+    // Par exemple, si tu as besoin d'une clé utilisateur unique, tu peux maintenant utiliser uid ou pseudo selon le cas
 
-    try {
-      const linkSnap = await firebase.database().ref("accounts/" + uid + "/link").once("value");
-      discordId = linkSnap.val();
+    // Continuer la suite avec le pseudo
+    setupPresence();
+    listenOnlineCount();
+    listenVix();       // ATTENTION : si listenVix dépendait du discordId, il faut adapter aussi
+    listenPixels();
 
-      if (!discordId) {
-        alert("Aucun compte Discord lié, merci de le faire sur link.html");
-        window.location.href = "link.html";
-        return;
-      }
+  } catch (err) {
+    console.error(err);
+    alert("Erreur lors de la récupération des données.");
+  }
+});
 
-      setupPresence();
-      listenOnlineCount();
-      listenVix();
-      listenPixels();
-
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la récupération des données.");
-    }
-  });
 
   function setupPresence() {
     presenceRef = firebase.database().ref("presence/" + uid);
@@ -389,6 +395,55 @@
       alert("Achat réussi !");
     });
   }
+const cursorsContainer = document.getElementById("cursors"); // Un conteneur HTML où tu affiches les curseurs
+
+function listenUsersPositions() {
+  const accountsRef = firebase.database().ref("accounts");
+
+  accountsRef.on("value", snapshot => {
+    cursorsContainer.innerHTML = ""; // On reset les curseurs à chaque update
+
+    const users = snapshot.val();
+
+    if (!users) return;
+
+    Object.entries(users).forEach(([uid, userData]) => {
+      if (!userData.position || !userData.pseudo) return;
+
+      // Ne pas afficher ton propre curseur
+      if (uid === firebase.auth().currentUser.uid) return;
+
+      const { x, y } = userData.position;  // ou lat/lng selon ta structure
+      const pseudo = userData.pseudo;
+
+      // Créer un élément curseur
+      const cursor = document.createElement("div");
+      cursor.classList.add("cursor");
+      cursor.style.position = "absolute";
+      cursor.style.left = x + "px"; // adapter selon ton système de coordonnées
+      cursor.style.top = y + "px";
+      cursor.style.width = "20px";
+      cursor.style.height = "20px";
+      cursor.style.backgroundColor = "red";
+      cursor.style.borderRadius = "50%";
+      cursor.title = pseudo;
+
+      // Ajouter un label sous forme de tooltip ou texte
+      const label = document.createElement("span");
+      label.textContent = pseudo;
+      label.style.position = "absolute";
+      label.style.top = "22px";
+      label.style.left = "-10px";
+      label.style.color = "white";
+      label.style.fontSize = "12px";
+      label.style.textShadow = "0 0 2px black";
+      cursor.appendChild(label);
+
+      cursorsContainer.appendChild(cursor);
+    });
+  });
+}
+
 let selectedColor = null;
 
 document.querySelectorAll('.color-slot').forEach(slot => {
