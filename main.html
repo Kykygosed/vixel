@@ -385,19 +385,19 @@
   }
 let selectedColor = null;
 
-document.querySelectorAll('.color-swatch').forEach(swatch => {
-  swatch.addEventListener('click', () => {
-    // Retirer la sélection précédente
-    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+document.querySelectorAll('.color-slot').forEach(slot => {
+  slot.addEventListener('click', () => {
+    // Enlever la sélection précédente
+    document.querySelectorAll('.color-slot').forEach(s => s.classList.remove('selected'));
 
-    // Sélectionner la nouvelle couleur
-    swatch.classList.add('selected');
-    selectedColor = swatch.dataset.color;
+    // Ajouter la nouvelle sélection
+    slot.classList.add('selected');
+    selectedColor = slot.dataset.color;
 
-    console.log("Couleur sélectionnée :", selectedColor);
-    // Tu peux maintenant utiliser `selectedColor` dans ton code où tu veux
+    console.log("🎨 Couleur sélectionnée :", selectedColor);
   });
 });
+
 
 
 
