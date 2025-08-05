@@ -481,25 +481,25 @@ function isPixelVisible(x, y) {
   );
 }
 
-canvas.addEventListener("click", async (e) => {
-  if (!selectedColor) return;
+canvas.addEventListener("click", function(event) {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
 
-  const rect = canvas.getBoundingClientRect();
-const x = Math.floor((e.clientX / scale + offsetX - rect.left) / PIXEL_SIZE);
-const y = Math.floor((e.clientY / scale + offsetY - rect.top) / PIXEL_SIZE);
+    // Corriger la position en fonction du zoom et des offsets
+    const x = Math.floor((mouseX - offsetX) / scale);
+    const y = Math.floor((mouseY - offsetY) / scale);
 
+    if (balance >= 10) {
+        const pixelRef = firebase.database().ref("pixels/" + x + "_" + y);
+        pixelRef.set({ x, y, color: selectedColor });
+        balance -= 10;
+        updateBalance();
+    } else {
+        alert("Pas assez de balance !");
+    }
+});
 
-  const pixelPath = `pixels/${x}_${y}`;
-
-  // Vérifie les pixels restants
-  const pixelRef = firebase.database().ref(`accounts/${uid}/pixels`);
-  const currentPixelSnap = await pixelRef.get();
-  const pixelCount = currentPixelSnap.val() || 0;
-
-  if (pixelCount <= 0) {
-    alert("Tu n'as plus de pixels !");
-    return;
-  }
 
   // Placer le pixel
   firebase.database().ref(pixelPath).set({
