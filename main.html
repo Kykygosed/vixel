@@ -254,6 +254,8 @@
 }
 
   </style>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
 </head>
 <body>
    <div class="topbar">
@@ -966,54 +968,72 @@ function sendMessage() {
 const chatMessages = document.getElementById("chatMessages");
 const maxMessages = 5;
 
-// Récupérer le pseudo local pour détecter les mentions
 let localPseudo = null;
+
+// Obtenir le pseudo de l'utilisateur connecté
 firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap => {
   localPseudo = snap.val();
-});
 
-firebase.database().ref("chat").limitToLast(20).on("child_added", snapshot => {
-  const data = snapshot.val();
+  // Écouter les nouveaux messages du chat
+  firebase.database().ref("chat").limitToLast(20).on("child_added", async snapshot => {
+    const data = snapshot.val();
+    const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
 
-  const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
+    const line = document.createElement("div");
+    let messageHTML = data.message;
+    let isMentioned = false;
+
+    // ✅ Mention détectée
+    if (localPseudo && data.message.includes("@" + localPseudo)) {
+      isMentioned = true;
+      const regex = new RegExp("@" + localPseudo + "\\b", "g");
+      messageHTML = messageHTML.replace(regex, `<span style="color: white; background-color: #007bff; padding: 2px 4px; border-radius: 3px;">@${localPseudo}</span>`);
+      const ping = new Audio("ping.mp3");
+      ping.play().catch(e => console.warn("Erreur lecture audio:", e));
+    }
+
+    // ✅ Récupération du rank depuis Firebase
+    let isAdmin = false;
+    try {
+      const userSnap = await firebase.database().ref("accounts").orderByChild("pseudo").equalTo(data.pseudo).once("value");
+      userSnap.forEach(child => {
+        if (child.val().rank === "admin") {
+          isAdmin = true;
+        }
+      });
+    } catch (err) {
+      console.error("Erreur lecture rank:", err);
+    }
+
+    // ✅ Construction du badge admin
+    const adminBadge = isAdmin
+      ? `<span style="background-color: red; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-left: 6px;">ADMIN</span>`
+      : "";
+
+    // ✅ Insertion finale
+    line.innerHTML = `<span>[${time}] <strong>${data.pseudo}</strong>${adminBadge} : ${messageHTML}</span>`;
+
+    if (isMentioned) {
+      line.style.backgroundColor = "#fff9c4";
+      line.style.borderRadius = "4px";
+      line.style.padding = "4px";
+    }
+
+    chatMessages.appendChild(line);
+
+    // Supprimer anciens messages
+    while (chatMessages.children.length > maxMessages) {
+      chatMessages.removeChild(chatMessages.firstChild);
+    }
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   });
-
-  const line = document.createElement("div");
-
-  // ✅ Détection de la mention
-  let messageHTML = data.message;
-  const mentionRegex = new RegExp(`@${localPseudo}\\b`, 'gi');
-
-  let isMentioned = false;
-  if (localPseudo && mentionRegex.test(data.message)) {
-    isMentioned = true;
-    messageHTML = data.message.replace(mentionRegex, `<span style="color: white; background-color: #2196f3; padding: 2px 4px; border-radius: 3px;">@${localPseudo}</span>`);
-    
-    // 🔊 Jouer le son si mentionné
-    const pingSound = new Audio("ping.mp3");
-    pingSound.play().catch(e => console.warn("Erreur son:", e));
-  }
-
-  line.innerHTML = `<span>[${time}] <strong>${data.pseudo}</strong> : ${messageHTML}</span>`;
-
-  // 💛 Fond jaune si c'est une mention pour nous
-  if (isMentioned) {
-    line.style.backgroundColor = "#fff176";
-    line.style.borderRadius = "5px";
-    line.style.padding = "2px 4px";
-  }
-
-  chatMessages.appendChild(line);
-
-  while (chatMessages.children.length > maxMessages) {
-    chatMessages.removeChild(chatMessages.firstChild);
-  }
-
-  chatMessages.scrollTop = chatMessages.scrollHeight;
 });
+
 
 
   </script>
