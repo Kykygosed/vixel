@@ -369,6 +369,7 @@
     <img src="default.png" alt="Default" style="width: 40px; height: 40px;" />
   </button>
 </div>
+<audio id="pingSound" src="ping.mp3" preload="auto"></audio>
 
 
 
@@ -949,11 +950,9 @@ function sendMessage() {
   const message = input.value.trim();
   if (message === "" || !uid) return;
 
-  // Récupération du pseudo
   firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap => {
     const pseudo = snap.val() || "???";
 
-    // Enregistrement dans la DB
     firebase.database().ref("chat").push({
       pseudo,
       message,
@@ -964,9 +963,14 @@ function sendMessage() {
   });
 }
 
-// Affichage en temps réel
 const chatMessages = document.getElementById("chatMessages");
 const maxMessages = 5;
+
+// Récupérer le pseudo local pour détecter les mentions
+let localPseudo = null;
+firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap => {
+  localPseudo = snap.val();
+});
 
 firebase.database().ref("chat").limitToLast(20).on("child_added", snapshot => {
   const data = snapshot.val();
@@ -978,54 +982,39 @@ firebase.database().ref("chat").limitToLast(20).on("child_added", snapshot => {
   });
 
   const line = document.createElement("div");
-  line.textContent = `[${time}] ${data.pseudo} : ${data.message}`;
+
+  // ✅ Détection de la mention
+  let messageHTML = data.message;
+  const mentionRegex = new RegExp(`@${localPseudo}\\b`, 'gi');
+
+  let isMentioned = false;
+  if (localPseudo && mentionRegex.test(data.message)) {
+    isMentioned = true;
+    messageHTML = data.message.replace(mentionRegex, `<span style="color: white; background-color: #2196f3; padding: 2px 4px; border-radius: 3px;">@${localPseudo}</span>`);
+    
+    // 🔊 Jouer le son si mentionné
+    const pingSound = new Audio("ping.mp3");
+    pingSound.play().catch(e => console.warn("Erreur son:", e));
+  }
+
+  line.innerHTML = `<span>[${time}] <strong>${data.pseudo}</strong> : ${messageHTML}</span>`;
+
+  // 💛 Fond jaune si c'est une mention pour nous
+  if (isMentioned) {
+    line.style.backgroundColor = "#fff176";
+    line.style.borderRadius = "5px";
+    line.style.padding = "2px 4px";
+  }
+
   chatMessages.appendChild(line);
 
-  // ❌ Supprimer les anciens messages si on dépasse 5 visibles
   while (chatMessages.children.length > maxMessages) {
     chatMessages.removeChild(chatMessages.firstChild);
   }
 
-  // Scroll automatique en bas
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
-const pixelInfoBox = document.getElementById("pixelInfo");
 
-// Survol du canvas
-canvas.addEventListener("mousemove", async (e) => {
-  const x = Math.floor((e.offsetX - offsetX) / zoom);
-  const y = Math.floor((e.offsetY - offsetY) / zoom);
-
-  if (x < 0 || x >= mapSize || y < 0 || y >= mapSize) {
-    pixelInfoBox.style.display = "none";
-    return;
-  }
-
-  const key = `${x}:${y}`;
-  const pixelData = pixelsData[key]; // ⚠️ tu as déjà "pixelsData" à jour grâce à ton listener
-
-  if (!pixelData || !pixelData.placedBy) {
-    pixelInfoBox.style.display = "none";
-    return;
-  }
-
-  try {
-    // Récupération du pseudo depuis l’UUID
-    const snap = await firebase.database().ref("accounts/" + pixelData.placedBy + "/pseudo").once("value");
-    const pseudo = snap.val() || "???";
-
-    pixelInfoBox.textContent = `(${x}, ${y}) placé par ${pseudo}`;
-    pixelInfoBox.style.display = "block";
-  } catch (err) {
-    console.error("Erreur récupération pseudo:", err);
-    pixelInfoBox.style.display = "none";
-  }
-});
-
-// Si la souris sort du canvas → cacher l’infos
-canvas.addEventListener("mouseleave", () => {
-  pixelInfoBox.style.display = "none";
-});
 
   </script>
 </body>
