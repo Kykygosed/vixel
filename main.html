@@ -1216,12 +1216,16 @@ firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap =
   });
 });
 
-window.addEventListener('load', () => {
-  const loadingScreen = document.getElementById('loadingScreen');
-  if (loadingScreen) {
-    loadingScreen.style.display = 'none';
-  }
-});
+  window.addEventListener('load', () => {
+    // Au moment du chargement complet
+    setTimeout(() => {
+      // Après 5 secondes, on masque le loading screen
+      const loadingScreen = document.getElementById('loadingScreen');
+      if (loadingScreen) {
+        loadingScreen.style.display = 'none';
+      }
+    }, 5000); // 5000 ms = 5 secondes
+  });
 
 
   </script>
