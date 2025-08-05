@@ -59,6 +59,72 @@
       width: 24px;
       height: 24px;
     }
+  .pixel-container {
+  background: #888888cc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 12px;
+  font-family: 'Press Start 2P', cursive;
+  margin-left: 10px;
+}
+.pixel-container img {
+  width: 24px;
+  height: 24px;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.popup {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  font-family: 'Press Start 2P', cursive;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.offer {
+  background: #eeeeee;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.offer img {
+  width: 80px;
+  height: auto;
+}
+
+.offer button {
+  margin-top: 10px;
+  font-family: 'Press Start 2P', cursive;
+  background: #222;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
   </style>
 </head>
 <body>
@@ -68,16 +134,43 @@
       <span id="onlineCount">0</span>
     </div>
 
-    <div class="shop-btn" onclick="alert('Ouvre la boutique ici !')">
+    <div class="shop-btn" onclick="openShop()">
       <img src="shop.png" alt="Boutique" />
       <span>Boutique</span>
     </div>
-
+    <div class="pixel-container">
+      <img src="pixel.png" alt="Pixels" />
+      <span id="pixelCount">0 Pixels</span>
+    </div>
+  
     <div class="vix-container">
       <img src="vix.png" alt="VIX" />
       <span id="vixCount">0 VIX</span>
     </div>
   </div>
+<div class="popup-overlay" id="shopPopup">
+  <div class="popup">
+    <div class="offer" data-pixels="100" data-cost="50">
+      <div>100 PIXELS</div>
+      <div>Coût : 50 VIX</div>
+      <img src="100.png" alt="100 Pixels">
+      <button onclick="buyPixels(100, 50)">Acheter</button>
+    </div>
+    <div class="offer" data-pixels="200" data-cost="100">
+      <div>200 PIXELS</div>
+      <div>Coût : 100 VIX</div>
+      <img src="200.png" alt="200 Pixels">
+      <button onclick="buyPixels(200, 100)">Acheter</button>
+    </div>
+    <div class="offer" data-pixels="300" data-cost="200">
+      <div>300 PIXELS</div>
+      <div>Coût : 200 VIX</div>
+      <img src="300.png" alt="300 Pixels">
+      <button onclick="buyPixels(300, 200)">Acheter</button>
+    </div>
+    <button onclick="closeShop()" style="margin-top: 20px;">Fermer</button>
+  </div>
+</div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -168,6 +261,50 @@ const firebaseConfig = {
         vixCountSpan.textContent = (vix !== null ? vix : 0) + " VIX";
       });
     }
+    const pixelCountSpan = document.getElementById("pixelCount");
+const shopPopup = document.getElementById("shopPopup");
+
+function openShop() {
+  shopPopup.style.display = "flex";
+}
+
+function closeShop() {
+  shopPopup.style.display = "none";
+}
+
+// Écoute en temps réel du compteur de Pixels
+function listenPixels() {
+  firebase.database().ref("accounts/" + uid + "/pixels").on("value", snapshot => {
+    const pixels = snapshot.val();
+    pixelCountSpan.textContent = (pixels !== null ? pixels : 0) + " Pixels";
+  });
+}
+
+// Achat d'une offre
+function buyPixels(pixelsToAdd, vixCost) {
+  const userRef = firebase.database().ref("users/" + discordId + "/balance");
+  const pixelRef = firebase.database().ref("accounts/" + uid + "/pixels");
+
+  userRef.once("value").then(vixSnap => {
+    const currentVix = vixSnap.val() || 0;
+
+    if (currentVix < vixCost) {
+      alert("Pas assez de VIX !");
+      return;
+    }
+
+    // Déduction des VIX et ajout des Pixels
+    userRef.set(currentVix - vixCost);
+
+    pixelRef.once("value").then(pixelSnap => {
+      const currentPixels = pixelSnap.val() || 0;
+      pixelRef.set(currentPixels + pixelsToAdd);
+    });
+
+    alert("Achat réussi !");
+  });
+}
+
   </script>
 </body>
 </html>
