@@ -74,8 +74,8 @@ const firebaseConfig = {
             return;
           }
 
-          // 🔍 Lit la balance depuis users/{ID}/balance
-         firebase.database().ref("users/" + discordId + "/balance").on("value", balanceSnap => {
+         // 🔍 Lit la balance en temps réel depuis users/{ID}/balance
+firebase.database().ref("users/" + discordId + "/balance").on("value", balanceSnap => {
   const vix = balanceSnap.val();
   vixDiv.textContent = vix !== null ? vix + " VIX" : "0 VIX";
 });
