@@ -463,6 +463,103 @@ function drawPixels() {
     ctx.fillRect(screenX, screenY, zoom, zoom);
   }
 }
+const cursorsContainer = document.createElement("div");
+document.body.appendChild(cursorsContainer);
+
+const mouseRef = firebase.database().ref("mouse_positions");
+const remoteCursors = {}; // UID => DOM Element
+
+// 1. Met à jour sa propre position de souris
+document.addEventListener("mousemove", (e) => {
+  if (!uid) return;
+
+  const x = e.clientX;
+  const y = e.clientY;
+
+  // Format "x.y" en deux chiffres après la virgule
+  const cursorStr = `${x.toFixed(2)}.${y.toFixed(2)}`;
+  
+  firebase.database().ref("accounts/" + uid + "/cursor").set(cursorStr);
+
+  // En plus : mettre à jour la position visible (comme avant)
+  mouseRef.child(uid).set({
+    x,
+    y,
+    timestamp: Date.now()
+  });
+});
+
+// Nettoyage à la déconnexion
+// Quand l'utilisateur ferme la page ou recharge
+window.addEventListener("beforeunload", () => {
+  if (!uid) return;
+
+  // Supprimer la présence du curseur visible
+  firebase.database().ref("mouse_positions/" + uid).remove();
+
+  // Supprimer aussi la position "accounts/UID/cursor"
+  firebase.database().ref("accounts/" + uid + "/cursor").remove();
+});
+
+// Gestion de la déconnexion automatique (Firebase)
+firebase.database().ref(".info/connected").on("value", (snap) => {
+  if (snap.val() === false || !uid) return;
+
+  // Supprime la souris à la déconnexion réseau
+  firebase.database().ref("mouse_positions/" + uid).onDisconnect().remove();
+
+  // Supprime aussi la position texte dans accounts/UID/cursor
+  firebase.database().ref("accounts/" + uid + "/cursor").onDisconnect().remove();
+});
+
+// 2. Écoute les mouvements des autres
+mouseRef.on("value", (snapshot) => {
+  const allData = snapshot.val() || {};
+  for (const otherUid in allData) {
+    if (otherUid === uid) continue; // Ne pas afficher son propre curseur
+
+    const data = allData[otherUid];
+    if (!remoteCursors[otherUid]) {
+      const cursorEl = document.createElement("div");
+      cursorEl.className = "remote-cursor";
+
+      const pseudoEl = document.createElement("div");
+      pseudoEl.textContent = "...";
+      cursorEl.appendChild(pseudoEl);
+
+      const imgEl = document.createElement("img");
+      imgEl.src = "cursor.png";
+      cursorEl.appendChild(imgEl);
+
+      cursorsContainer.appendChild(cursorEl);
+      remoteCursors[otherUid] = {
+        el: cursorEl,
+        pseudoEl,
+        imgEl,
+        x: 0,
+        y: 0
+      };
+
+      // Récupère et affiche le pseudo
+      firebase.database().ref("accounts/" + otherUid + "/pseudo").once("value").then(snap => {
+        pseudoEl.textContent = snap.val() || "???";
+      });
+    }
+
+    // Met à jour la position
+    const cursor = remoteCursors[otherUid];
+    cursor.el.style.left = data.x + "px";
+    cursor.el.style.top = data.y + "px";
+  }
+
+  // Supprime les curseurs qui ne sont plus là
+  for (const uidInDOM in remoteCursors) {
+    if (!allData[uidInDOM]) {
+      cursorsContainer.removeChild(remoteCursors[uidInDOM].el);
+      delete remoteCursors[uidInDOM];
+    }
+  }
+});
 
 // Zoom à la molette
 canvas.addEventListener("wheel", (e) => {
