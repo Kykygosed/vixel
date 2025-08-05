@@ -263,6 +263,7 @@
       <img src="online.png" alt="Online" />
       <span id="onlineCount">0</span>
     </div>
+<div id="onlineListTooltip" style="position:absolute; background:#222; color:#fff; padding:5px 10px; border-radius:5px; display:none; max-height:200px; overflow-y:auto; font-size:0.9em; z-index:1000;"></div>
 
     <div class="shop-btn" onclick="openShop()">
       <img src="shop.png" alt="Boutique" />
@@ -539,7 +540,70 @@ firebase.auth().onAuthStateChanged(async user => {
     });
   }
 
+const onlineListTooltip = document.getElementById("onlineListTooltip");
 
+// Positionner le tooltip proche de onlineCountSpan
+function positionTooltip() {
+  const rect = onlineCountSpan.getBoundingClientRect();
+  onlineListTooltip.style.top = (rect.bottom + window.scrollY + 5) + "px";
+  onlineListTooltip.style.left = (rect.left + window.scrollX) + "px";
+}
+
+// Fonction qui récupère la liste des pseudos en ligne
+async function fetchOnlineUsers() {
+  const presenceSnapshot = await firebase.database().ref("presence").once("value");
+  const presenceData = presenceSnapshot.val() || {};
+  const onlineUIDs = Object.entries(presenceData)
+    .filter(([uid, isOnline]) => isOnline === true)
+    .map(([uid]) => uid);
+
+  // Récupérer les pseudos en parallèle
+  const pseudoPromises = onlineUIDs.map(async uid => {
+    const pseudoSnap = await firebase.database().ref("accounts/" + uid + "/pseudo").once("value");
+    return pseudoSnap.val() || "(inconnu)";
+  });
+
+  const pseudos = await Promise.all(pseudoPromises);
+  return pseudos;
+}
+
+onlineCountSpan.addEventListener("mouseenter", async () => {
+  positionTooltip();
+  onlineListTooltip.style.display = "block";
+  onlineListTooltip.textContent = "Chargement...";
+
+  try {
+    const pseudos = await fetchOnlineUsers();
+    if (pseudos.length === 0) {
+      onlineListTooltip.textContent = "Aucun utilisateur en ligne.";
+    } else {
+      // Créer une liste HTML
+      const ul = document.createElement("ul");
+      ul.style.margin = "0";
+      ul.style.paddingLeft = "20px";
+      ul.style.maxHeight = "200px";
+      ul.style.overflowY = "auto";
+
+      pseudos.forEach(pseudo => {
+        const li = document.createElement("li");
+        li.textContent = pseudo;
+        ul.appendChild(li);
+      });
+
+      onlineListTooltip.innerHTML = "";
+      onlineListTooltip.appendChild(ul);
+    }
+  } catch (err) {
+    onlineListTooltip.textContent = "Erreur lors du chargement.";
+    console.error(err);
+  }
+});
+
+onlineCountSpan.addEventListener("mouseleave", () => {
+  onlineListTooltip.style.display = "none";
+});
+
+    
 let lastVixValue = null;
 
 function listenVix() {
