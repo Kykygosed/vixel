@@ -400,6 +400,8 @@
 
   let uid, discordId, presenceRef;
  let pixelsData = {}; // clé: "x_y", valeur: { color: "...", author: "..." }
+  let chatInitialized = false;
+
 
 // Exemple d'écoute Firebase
 firebase.database().ref("pixels").on("value", snapshot => {
@@ -407,7 +409,9 @@ firebase.database().ref("pixels").on("value", snapshot => {
   drawPixels();
 });
 
-  firebase.auth().onAuthStateChanged(async user => {
+
+
+firebase.auth().onAuthStateChanged(async user => {
   if (!user) {
     window.location.href = "index.html";
     return;
@@ -415,31 +419,104 @@ firebase.database().ref("pixels").on("value", snapshot => {
 
   uid = user.uid;
 
+  // 🔽 Supprime tout ancien listener pour éviter doublons
+  firebase.database().ref("chat").off();
+
   try {
-    // Récupérer le pseudo ici
+    // 🔽 Récupérer le pseudo
     const pseudoSnap = await firebase.database().ref("accounts/" + uid + "/pseudo").once("value");
     const pseudo = pseudoSnap.val();
 
     if (!pseudo) {
       alert("Aucun pseudo trouvé, merci de le configurer.");
-      // Optionnel : redirection ou autre gestion
       return;
     }
 
-    // Si tu utilisais discordId pour d'autres choses, adapte ici
-    // Par exemple, si tu as besoin d'une clé utilisateur unique, tu peux maintenant utiliser uid ou pseudo selon le cas
-
-    // Continuer la suite avec le pseudo
+    // 🔽 Lancer les fonctions liées à l'utilisateur connecté
     setupPresence();
     listenOnlineCount();
-    listenVix();       // ATTENTION : si listenVix dépendait du discordId, il faut adapter aussi
+    listenVix();
     listenPixels();
 
+    // 🔽 Stocke le pseudo localement pour le chat
+    localPseudo = pseudo;
+
+    // 🔽 Écouter les nouveaux messages du chat
+    firebase.database().ref("chat").off("child_added");
+    firebase.database().ref("chat").limitToLast(20).on("child_added", async snapshot => {
+      const data = snapshot.val();
+      const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+
+      const line = document.createElement("div");
+      let messageHTML = data.message;
+      let isMentioned = false;
+
+      // Mentions
+      if (localPseudo && data.message.includes("@" + localPseudo)) {
+        isMentioned = true;
+        const regex = new RegExp("@" + localPseudo + "\\b", "g");
+        messageHTML = messageHTML.replace(regex, `<span style="color: white; background-color: #007bff; padding: 2px 4px; border-radius: 3px;">@${localPseudo}</span>`);
+        const ping = new Audio("ping.mp3");
+        ping.play().catch(e => console.warn("Erreur lecture audio:", e));
+      }
+
+      // Rank admin ?
+      let isAdmin = false;
+      try {
+        const userSnap = await firebase.database().ref("accounts").orderByChild("pseudo").equalTo(data.pseudo).once("value");
+        userSnap.forEach(child => {
+          if (child.val().rank === "admin") {
+            isAdmin = true;
+          }
+        });
+      } catch (err) {
+        console.error("Erreur lecture rank:", err);
+      }
+
+      const adminBadge = isAdmin
+        ? `<span style="background-color: red; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-left: 6px;">ADMIN</span>`
+        : "";
+
+      line.innerHTML = `<span>[${time}] <strong>${data.pseudo}</strong>${adminBadge} : ${messageHTML}</span>`;
+
+      if (isMentioned) {
+        line.style.backgroundColor = "#fff9c4";
+        line.style.borderRadius = "4px";
+        line.style.padding = "4px";
+      }
+
+      chatMessages.appendChild(line);
+
+      while (chatMessages.children.length > maxMessages) {
+        chatMessages.removeChild(chatMessages.firstChild);
+      }
+
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      // ✅ Message de bienvenue local à l'utilisateur
+      if (!chatInitialized) {
+        chatInitialized = true;
+
+        setTimeout(() => {
+          const welcomeLine = document.createElement("div");
+          welcomeLine.innerHTML = `<span style="color: yellow;">Bienvenue sur Vixel! Pour la liste des commandes, faites <strong>/help</strong></span>`;
+          chatMessages.appendChild(welcomeLine);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 100);
+      }
+    });
+
   } catch (err) {
-    console.error(err);
+    console.error("Erreur dans onAuthStateChanged :", err);
     alert("Erreur lors de la récupération des données.");
   }
 });
+
+
 
 
   function setupPresence() {
