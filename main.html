@@ -42,8 +42,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <script>
-    // 🔧 MÊME CONFIG que les autres fichiers
-    const firebaseConfig = {
+    // 🔧 Remplace ceci avec ta configuration Firebase
+const firebaseConfig = {
   apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
   authDomain: "kychat-45596.firebaseapp.com",
   databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
@@ -52,6 +52,7 @@
   messagingSenderId: "104462848972",
   appId: "1:104462848972:web:7ac49e63008e9a11150369"
 };
+
     firebase.initializeApp(firebaseConfig);
 
     const vixDiv = document.getElementById("vix");
@@ -64,7 +65,7 @@
 
       const uid = user.uid;
 
-      // 🔁 On récupère le lien Discord de l'utilisateur
+      // 🔁 Récupère l’ID Discord lié à ce compte
       firebase.database().ref("accounts/" + uid + "/link").once("value")
         .then(snapshot => {
           const discordId = snapshot.val();
@@ -73,14 +74,14 @@
             return;
           }
 
-          // 🧠 On récupère le nombre de VIX depuis discord/ID/vix
-          firebase.database().ref("discord/" + discordId + "/vix").once("value")
-            .then(vixSnap => {
-              const vix = vixSnap.val();
+          // 🔍 Lit la balance depuis users/{ID}/balance
+          firebase.database().ref("users/" + discordId + "/balance").once("value")
+            .then(balanceSnap => {
+              const vix = balanceSnap.val();
               vixDiv.textContent = vix !== null ? vix + " VIX" : "0 VIX";
             })
             .catch(err => {
-              vixDiv.textContent = "Erreur chargement VIX.";
+              vixDiv.textContent = "Erreur chargement des VIX.";
               console.error(err);
             });
         })
