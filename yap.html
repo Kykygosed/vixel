@@ -1,0 +1,962 @@
+<!DOCTYPE html> 
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Main - VIX & Présence</title>
+<style>
+    body {
+      margin: 0;
+      font-family: 'Press Start 2P', cursive;
+      background: #f0f0f0;
+      cursor: url('cursor.png') 16 16, auto;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #222;
+      padding: 10px 20px;
+      color: white;
+      user-select: none;
+      font-family: 'Press Start 2P', cursive; /* Ajouté explicitement */
+    }
+    .presence {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-family: 'Press Start 2P', cursive; /* forcer ici aussi */
+    }
+    .presence img {
+      width: 24px;
+      height: 24px;
+    }
+    .shop-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      user-select: none;
+      color: white;
+      font-family: 'Press Start 2P', cursive; /* forcer ici aussi */
+    }
+    .shop-btn img {
+      width: 24px;
+      height: 24px;
+    }
+    .vix-container {
+      background: #888888cc;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 12px;
+      font-family: 'Press Start 2P', cursive; /* forcer ici aussi */
+    }
+    .vix-container img {
+      width: 24px;
+      height: 24px;
+    }
+  .pixel-container {
+  background: #888888cc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 12px;
+  font-family: 'Press Start 2P', cursive;
+  margin-left: 10px;
+}
+.pixel-container img {
+  width: 24px;
+  height: 24px;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.popup {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  font-family: 'Press Start 2P', cursive;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.offer {
+  background: #eeeeee;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.offer img {
+  width: 80px;
+  height: auto;
+}
+
+.offer button {
+  margin-top: 10px;
+  font-family: 'Press Start 2P', cursive;
+  background: #222;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+/* Curseur custom */
+
+
+
+/* Hotbar de couleur */
+.color-hotbar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 20, 0.7);
+  padding: 10px 15px;
+  border-radius: 15px;
+  display: flex;
+  gap: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
+}
+
+/* Chaque couleur dans la hotbar */
+.color-slot {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid white;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: transform 0.2s ease, border 0.2s ease;
+}
+
+.color-slot.selected {
+  transform: scale(1.2);
+  border: 3px solid gold;
+  box-shadow: 0 0 10px gold;
+}
+
+/* Couleurs */
+.color-slot.red { background-color: red; }
+.color-slot.yellow { background-color: yellow; }
+.color-slot.blue { background-color: blue; }
+.color-slot.green { background-color: green; }
+.color-slot.purple { background-color: purple; }
+.color-slot.black { background-color: black; }
+
+.chatbox {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 300px;
+  max-height: 300px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 0 10px black;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;
+}
+
+.chat-messages {
+  overflow-y: auto;
+  flex-grow: 1;
+  margin-bottom: 8px;
+  max-height: 200px;
+}
+
+.chat-input {
+  display: flex;
+  gap: 5px;
+}
+
+.chat-input input {
+  flex-grow: 1;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  padding: 4px;
+  border: none;
+  border-radius: 5px;
+}
+
+.chat-input button {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 5px;
+  background: #222;
+  color: white;
+  cursor: pointer;
+}
+.value-change {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-family: 'Press Start 2P', cursive;
+  pointer-events: none;
+  opacity: 1;
+  animation: riseAndFade 1s ease-out forwards;
+  z-index: 9999;
+}
+
+@keyframes riseAndFade {
+  0% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-20px);
+    opacity: 0;
+  }
+}
+
+  </style>
+</head>
+<body>
+   <div class="topbar">
+    <div class="presence">
+      <img src="online.png" alt="Online" />
+      <span id="onlineCount">0</span>
+    </div>
+
+    <div class="shop-btn" onclick="openShop()">
+      <img src="shop.png" alt="Boutique" />
+      <span>Boutique</span>
+    </div>
+<div class="pixel-container">
+  <img src="pixel.png" alt="Pixels" />
+  <span id="pixelCount">0 Pixels</span>
+</div>
+
+  
+    <div class="vix-container">
+      <img src="vix.png" alt="VIX" />
+      <span id="vixCount">0 VIX</span>
+    </div>
+  </div>
+<div class="popup-overlay" id="shopPopup">
+  <div class="popup" id="offersContainer">
+    <!-- Bouton fermer en haut à droite -->
+    <button id="closeShop" title="Fermer la boutique" style="
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      width: 30px;
+      height: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
+    ">X</button>
+
+    <!-- Offres injectées ici -->
+  </div>
+</div>
+
+</div>
+<div class="color-hotbar">
+  <div class="color-slot red" data-color="red"></div>
+  <div class="color-slot yellow" data-color="yellow"></div>
+  <div class="color-slot blue" data-color="blue"></div>
+  <div class="color-slot green" data-color="green"></div>
+  <div class="color-slot black" data-color="black"></div>
+<div class="color-slot white" data-color="white"></div>
+  <div class="color-slot purple" data-color="purple"></div>
+</div>
+
+<canvas id="pixelCanvas" width="1000" height="1000" style="border:1px solid #000; display: block; margin: auto; background: white;"></canvas>
+<div id="cursors-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none;">
+  <!-- Les curseurs des autres utilisateurs seront ajoutés ici -->
+</div>
+
+<div class="chatbox">
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-input">
+    <input type="text" id="chatInput" placeholder="Écris un message..." maxlength="200" />
+    <button onclick="sendMessage()">Envoyer</button>
+  </div>
+</div>
+<div id="pixelInfo" style="
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: none;
+  z-index: 9999;
+  pointer-events: none;
+"></div>
+
+<div id="toolButtons" style="
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  z-index: 9999;
+">
+  <button id="brushButton" title="Mode pinceau" style="
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  ">
+    <img src="brush.png" alt="Brush" style="width: 40px; height: 40px;" />
+  </button>
+  <button id="defaultButton" title="Mode normal" style="
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  ">
+    <img src="default.png" alt="Default" style="width: 40px; height: 40px;" />
+  </button>
+</div>
+
+
+
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
+    authDomain: "kychat-45596.firebaseapp.com",
+    databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
+    projectId: "kychat-45596",
+    storageBucket: "kychat-45596.appspot.com",
+    messagingSenderId: "104462848972",
+    appId: "1:104462848972:web:7ac49e63008e9a11150369"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  const onlineCountSpan = document.getElementById("onlineCount");
+  const vixCountSpan = document.getElementById("vixCount");
+  const pixelCountSpan = document.getElementById("pixelCount");
+  const shopPopup = document.getElementById("shopPopup");
+
+  let uid, discordId, presenceRef;
+ let pixelsData = {}; // clé: "x_y", valeur: { color: "...", author: "..." }
+
+// Exemple d'écoute Firebase
+firebase.database().ref("pixels").on("value", snapshot => {
+  pixelsData = snapshot.val() || {};
+  drawPixels();
+});
+
+  firebase.auth().onAuthStateChanged(async user => {
+  if (!user) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  uid = user.uid;
+
+  try {
+    // Récupérer le pseudo ici
+    const pseudoSnap = await firebase.database().ref("accounts/" + uid + "/pseudo").once("value");
+    const pseudo = pseudoSnap.val();
+
+    if (!pseudo) {
+      alert("Aucun pseudo trouvé, merci de le configurer.");
+      // Optionnel : redirection ou autre gestion
+      return;
+    }
+
+    // Si tu utilisais discordId pour d'autres choses, adapte ici
+    // Par exemple, si tu as besoin d'une clé utilisateur unique, tu peux maintenant utiliser uid ou pseudo selon le cas
+
+    // Continuer la suite avec le pseudo
+    setupPresence();
+    listenOnlineCount();
+    listenVix();       // ATTENTION : si listenVix dépendait du discordId, il faut adapter aussi
+    listenPixels();
+
+  } catch (err) {
+    console.error(err);
+    alert("Erreur lors de la récupération des données.");
+  }
+});
+
+
+  function setupPresence() {
+    presenceRef = firebase.database().ref("presence/" + uid);
+    presenceRef.set(true);
+    window.addEventListener("beforeunload", () => {
+      presenceRef.set(false);
+    });
+    presenceRef.onDisconnect().set(false);
+  }
+
+  function listenOnlineCount() {
+    firebase.database().ref("presence").on("value", snapshot => {
+      const presenceData = snapshot.val() || {};
+      let count = 0;
+      for (const key in presenceData) {
+        if (presenceData[key] === true) count++;
+      }
+      onlineCountSpan.textContent = count;
+    });
+  }
+
+  let lastVixValue = null;
+
+function listenVix(linkedId) {
+  firebase.database().ref("users/" + linkedId + "/balance").on("value", snapshot => {
+    const vix = snapshot.val() || 0;
+    vixCountSpan.textContent = vix + " VIX";
+
+    if (lastVixValue !== null) {
+      const diff = vix - lastVixValue;
+      if (diff !== 0) {
+        showValueChange(vixCountSpan, diff, diff > 0 ? "lime" : "red");
+      }
+    }
+
+    lastVixValue = vix;
+  });
+}
+
+
+  let lastPixelValue = null;
+
+function listenPixels(uid) {
+  firebase.database().ref("accounts/" + uid + "/pixels").on("value", snapshot => {
+    const pixels = snapshot.val() || 0;
+    pixelCountSpan.textContent = pixels + " Pixels";
+
+    if (lastPixelValue !== null) {
+      const diff = pixels - lastPixelValue;
+      if (diff !== 0) {
+        showValueChange(pixelCountSpan, diff, diff > 0 ? "lime" : "red");
+      }
+    }
+
+    lastPixelValue = pixels;
+  });
+}
+
+  function openShop() {
+    shopPopup.style.display = "flex";
+    loadOffers();
+  }
+
+  function closeShop() {
+    shopPopup.style.display = "none";
+  }
+
+ function loadOffers() {
+  const offersContainer = document.getElementById("offersContainer");
+  offersContainer.innerHTML = ""; // On vide les anciennes offres
+
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "Fermer";
+  closeBtn.style.marginTop = "20px";
+  closeBtn.onclick = closeShop;
+
+  firebase.database().ref("offers").once("value").then(snapshot => {
+    const offers = snapshot.val();
+
+    if (!offers) {
+      const noOffer = document.createElement("div");
+      noOffer.textContent = "Aucune offre disponible.";
+      noOffer.style.textAlign = "center";
+      offersContainer.appendChild(noOffer);
+      offersContainer.appendChild(closeBtn);
+      return;
+    }
+
+    for (const offerId in offers) {
+      const offer = offers[offerId];
+
+      const offerDiv = document.createElement("div");
+      offerDiv.className = "offer";
+
+      const title = document.createElement("div");
+      title.textContent = `${offer.pixels} PIXELS`;
+
+      const cost = document.createElement("div");
+      cost.textContent = `Coût : ${offer.cost} VIX`;
+
+      const img = document.createElement("img");
+      img.src = offer.image;
+      img.alt = `${offer.pixels} Pixels`;
+
+      const buyBtn = document.createElement("button");
+      buyBtn.textContent = "Acheter";
+      buyBtn.onclick = () => buyPixels(offer.pixels, offer.cost);
+
+      offerDiv.appendChild(title);
+      offerDiv.appendChild(cost);
+      offerDiv.appendChild(img);
+      offerDiv.appendChild(buyBtn);
+
+      offersContainer.appendChild(offerDiv);
+    }
+
+    offersContainer.appendChild(closeBtn);
+  });
+}
+
+
+  function buyPixels(pixelsToAdd, vixCost) {
+  // 1. Récupérer le lien vers l'ID de l'utilisateur (link)
+  firebase.database().ref("accounts/" + uid + "/link").once("value").then(linkSnap => {
+    const linkedId = linkSnap.val();
+
+    if (!linkedId) {
+      alert("Impossible d'acheter : identifiant lié non trouvé.");
+      return;
+    }
+
+    const userVixRef = firebase.database().ref("users/" + linkedId + "/balance");
+    const pixelRef = firebase.database().ref("accounts/" + uid + "/pixels");
+
+    // 2. Lire le solde actuel en VIX
+    userVixRef.once("value").then(vixSnap => {
+      const currentVix = vixSnap.val() || 0;
+
+      // 3. Vérifier si l'utilisateur a assez de VIX
+      if (currentVix < vixCost) {
+        alert("Pas assez de VIX !");
+        return;
+      }
+
+      // 4. Déduire les VIX
+      userVixRef.set(currentVix - vixCost);
+
+      // 5. Ajouter les pixels
+      pixelRef.once("value").then(pixelSnap => {
+        const currentPixels = pixelSnap.val() || 0;
+        pixelRef.set(currentPixels + pixelsToAdd);
+      });
+
+      // 6. Confirmation
+      alert("Achat réussi !");
+    });
+  }).catch(error => {
+    console.error("Erreur lors de l'achat :", error);
+    alert("Une erreur est survenue pendant l'achat.");
+  });
+}
+
+let selectedColor = null;
+
+document.querySelectorAll('.color-slot').forEach(slot => {
+  slot.addEventListener('click', () => {
+    // Enlever la sélection précédente
+    document.querySelectorAll('.color-slot').forEach(s => s.classList.remove('selected'));
+
+    // Ajouter la nouvelle sélection
+    slot.classList.add('selected');
+    selectedColor = slot.dataset.color;
+
+    console.log("🎨 Couleur sélectionnée :", selectedColor);
+  });
+});
+
+const canvas = document.getElementById("pixelCanvas");
+const ctx = canvas.getContext("2d");
+
+const mapSize = 500;
+const virtualPixelSize = 1; // taille logique d’un pixel = 1x1
+let zoom = 10; // affichage initial : chaque pixel fait 10px à l’écran
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let offsetX = canvas.width / 2 - (mapSize * virtualPixelSize * zoom) / 2;
+let offsetY = canvas.height / 2 - (mapSize * virtualPixelSize * zoom) / 2;
+
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+
+const pixels = {}; // Stock local
+
+// Fonction de rendu
+function drawPixels() {
+  // 1. Fond noir partout
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 2. Zone blanche de 500x500 pixels (la carte)
+  const mapScreenX = offsetX;
+  const mapScreenY = offsetY;
+  const mapScreenSize = mapSize * zoom;
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(mapScreenX, mapScreenY, mapScreenSize, mapScreenSize);
+
+  // 3. Dessin des pixels dans la map uniquement
+  for (let key in pixels) {
+    const [x, y] = key.split(":").map(Number);
+    const color = pixels[key];
+
+    if (x < 0 || x >= mapSize || y < 0 || y >= mapSize) continue;
+
+    const screenX = x * zoom + offsetX;
+    const screenY = y * zoom + offsetY;
+
+    if (
+      screenX + zoom < 0 || screenY + zoom < 0 ||
+      screenX > canvas.width || screenY > canvas.height
+    ) continue;
+
+    ctx.fillStyle = color;
+    ctx.fillRect(screenX, screenY, zoom, zoom);
+  }
+}
+const cursorsContainer = document.createElement("div");
+document.body.appendChild(cursorsContainer);
+
+const mouseRef = firebase.database().ref("mouse_positions");
+const remoteCursors = {}; // UID => DOM Element
+
+// 1. Met à jour sa propre position de souris
+document.addEventListener("mousemove", (e) => {
+  if (!uid) return;
+
+  const x = e.clientX;
+  const y = e.clientY;
+
+  // Format "x.y" en deux chiffres après la virgule
+  const cursorStr = `${x.toFixed(2)}.${y.toFixed(2)}`;
+  
+  firebase.database().ref("accounts/" + uid + "/cursor").set(cursorStr);
+
+  // En plus : mettre à jour la position visible (comme avant)
+  mouseRef.child(uid).set({
+    x,
+    y,
+    timestamp: Date.now()
+  });
+});
+function showValueChange(element, amount, color = "lime") {
+  const changeEl = document.createElement("div");
+  changeEl.className = "value-change";
+  changeEl.style.color = color;
+  changeEl.textContent = (amount > 0 ? "+" : "") + amount;
+
+  // Positionner par rapport à l'élément
+  const rect = element.getBoundingClientRect();
+  changeEl.style.top = rect.bottom + "px";
+  changeEl.style.left = rect.left + rect.width / 2 + "px";
+
+  document.body.appendChild(changeEl);
+
+  // Le retirer après l'animation
+  setTimeout(() => {
+    changeEl.remove();
+  }, 1000);
+}
+
+let pixelPlacementEnabled = true; // par défaut : placement activé
+
+const brushBtn = document.getElementById("brushButton");
+const defaultBtn = document.getElementById("defaultButton");
+const hotbar = document.querySelector(".color-hotbar");
+
+brushBtn.addEventListener("click", () => {
+  pixelPlacementEnabled = true;
+  hotbar.style.display = "flex"; // affiche la hotbar
+  console.log("🎨 Mode pinceau activé");
+});
+
+defaultBtn.addEventListener("click", () => {
+  pixelPlacementEnabled = false;
+  hotbar.style.display = "none"; // masque la hotbar
+  selectedColor = null; // déselectionne la couleur
+  document.querySelectorAll('.color-slot').forEach(s => s.classList.remove('selected'));
+  console.log("🧱 Mode normal activé (placement désactivé)");
+});
+
+// Nettoyage à la déconnexion
+// Quand l'utilisateur ferme la page ou recharge
+window.addEventListener("beforeunload", () => {
+  if (!uid) return;
+
+  // Supprimer la présence du curseur visible
+  firebase.database().ref("mouse_positions/" + uid).remove();
+
+  // Supprimer aussi la position "accounts/UID/cursor"
+  firebase.database().ref("accounts/" + uid + "/cursor").remove();
+});
+
+// Gestion de la déconnexion automatique (Firebase)
+firebase.database().ref(".info/connected").on("value", (snap) => {
+  if (snap.val() === false || !uid) return;
+
+  // Supprime la souris à la déconnexion réseau
+  firebase.database().ref("mouse_positions/" + uid).onDisconnect().remove();
+
+  // Supprime aussi la position texte dans accounts/UID/cursor
+  firebase.database().ref("accounts/" + uid + "/cursor").onDisconnect().remove();
+});
+
+// 2. Écoute les mouvements des autres
+mouseRef.on("value", (snapshot) => {
+  const allData = snapshot.val() || {};
+  for (const otherUid in allData) {
+    if (otherUid === uid) continue; // Ne pas afficher son propre curseur
+
+    const data = allData[otherUid];
+    if (!remoteCursors[otherUid]) {
+      const cursorEl = document.createElement("div");
+      cursorEl.className = "remote-cursor";
+
+      const pseudoEl = document.createElement("div");
+      pseudoEl.textContent = "...";
+      cursorEl.appendChild(pseudoEl);
+
+      const imgEl = document.createElement("img");
+      imgEl.src = "cursor.png";
+      cursorEl.appendChild(imgEl);
+
+      cursorsContainer.appendChild(cursorEl);
+      remoteCursors[otherUid] = {
+        el: cursorEl,
+        pseudoEl,
+        imgEl,
+        x: 0,
+        y: 0
+      };
+
+      // Récupère et affiche le pseudo
+      firebase.database().ref("accounts/" + otherUid + "/pseudo").once("value").then(snap => {
+        pseudoEl.textContent = snap.val() || "???";
+      });
+    }
+
+    // Met à jour la position
+    const cursor = remoteCursors[otherUid];
+    cursor.el.style.left = data.x + "px";
+    cursor.el.style.top = data.y + "px";
+  }
+
+  // Supprime les curseurs qui ne sont plus là
+  for (const uidInDOM in remoteCursors) {
+    if (!allData[uidInDOM]) {
+      cursorsContainer.removeChild(remoteCursors[uidInDOM].el);
+      delete remoteCursors[uidInDOM];
+    }
+  }
+});
+
+// Zoom à la molette
+canvas.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const scale = e.deltaY < 0 ? 1.1 : 0.9;
+
+  const mouseX = e.offsetX;
+  const mouseY = e.offsetY;
+
+  offsetX = mouseX - (mouseX - offsetX) * scale;
+  offsetY = mouseY - (mouseY - offsetY) * scale;
+
+  zoom *= scale;
+  drawPixels();
+});
+
+// Drag
+canvas.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+});
+canvas.addEventListener("mouseup", () => isDragging = false);
+canvas.addEventListener("mouseleave", () => isDragging = false);
+canvas.addEventListener("mousemove", (e) => {
+  if (isDragging) {
+    offsetX += e.clientX - dragStartX;
+    offsetY += e.clientY - dragStartY;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    drawPixels();
+  }
+});
+
+// Clic = placer pixel
+canvas.addEventListener("click", (e) => {
+  if (!pixelPlacementEnabled || !selectedColor || !uid) return;
+
+
+  const x = Math.floor((e.offsetX - offsetX) / zoom);
+  const y = Math.floor((e.offsetY - offsetY) / zoom);
+
+  if (x < 0 || x >= mapSize || y < 0 || y >= mapSize) return;
+
+  const key = `${x}:${y}`;
+  const pixelRef = firebase.database().ref("accounts/" + uid + "/pixels");
+
+  pixelRef.once('value').then(snap => {
+    let currentPixels = snap.val() || 0;
+    if (currentPixels <= 0) {
+      alert("Tu n'as plus de pixels !");
+      return;
+    }
+
+    pixelRef.set(currentPixels - 1);
+    firebase.database().ref("pixels/" + key).set({
+      color: selectedColor,
+      placedBy: uid,
+      timestamp: Date.now()
+    });
+  });
+});
+
+// Mise à jour live des pixels
+firebase.database().ref("pixels").on("child_added", snapshot => {
+  const key = snapshot.key;
+  const data = snapshot.val();
+  pixels[key] = data.color;
+  drawPixels();
+});
+firebase.database().ref("pixels").on("child_changed", snapshot => {
+  const key = snapshot.key;
+  const data = snapshot.val();
+  pixels[key] = data.color;
+  drawPixels();
+});
+
+// Resize auto
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  drawPixels();
+});
+function sendMessage() {
+  const input = document.getElementById("chatInput");
+  const message = input.value.trim();
+  if (message === "" || !uid) return;
+
+  // Récupération du pseudo
+  firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap => {
+    const pseudo = snap.val() || "???";
+
+    // Enregistrement dans la DB
+    firebase.database().ref("chat").push({
+      pseudo,
+      message,
+      timestamp: Date.now()
+    });
+
+    input.value = "";
+  });
+}
+
+// Affichage en temps réel
+const chatMessages = document.getElementById("chatMessages");
+const maxMessages = 5;
+
+firebase.database().ref("chat").limitToLast(20).on("child_added", snapshot => {
+  const data = snapshot.val();
+
+  const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+
+  const line = document.createElement("div");
+  line.textContent = `[${time}] ${data.pseudo} : ${data.message}`;
+  chatMessages.appendChild(line);
+
+  // ❌ Supprimer les anciens messages si on dépasse 5 visibles
+  while (chatMessages.children.length > maxMessages) {
+    chatMessages.removeChild(chatMessages.firstChild);
+  }
+
+  // Scroll automatique en bas
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+const pixelInfoBox = document.getElementById("pixelInfo");
+
+// Survol du canvas
+canvas.addEventListener("mousemove", async (e) => {
+  const x = Math.floor((e.offsetX - offsetX) / zoom);
+  const y = Math.floor((e.offsetY - offsetY) / zoom);
+
+  if (x < 0 || x >= mapSize || y < 0 || y >= mapSize) {
+    pixelInfoBox.style.display = "none";
+    return;
+  }
+
+  const key = `${x}:${y}`;
+  const pixelData = pixelsData[key]; // ⚠️ tu as déjà "pixelsData" à jour grâce à ton listener
+
+  if (!pixelData || !pixelData.placedBy) {
+    pixelInfoBox.style.display = "none";
+    return;
+  }
+
+  try {
+    // Récupération du pseudo depuis l’UUID
+    const snap = await firebase.database().ref("accounts/" + pixelData.placedBy + "/pseudo").once("value");
+    const pseudo = snap.val() || "???";
+
+    pixelInfoBox.textContent = `(${x}, ${y}) placé par ${pseudo}`;
+    pixelInfoBox.style.display = "block";
+  } catch (err) {
+    console.error("Erreur récupération pseudo:", err);
+    pixelInfoBox.style.display = "none";
+  }
+});
+
+// Si la souris sort du canvas → cacher l’infos
+canvas.addEventListener("mouseleave", () => {
+  pixelInfoBox.style.display = "none";
+});
+
+  </script>
+</body>
+</html>
