@@ -208,6 +208,7 @@
   <div class="color-slot green" data-color="green"></div>
   <div class="color-slot purple" data-color="purple"></div>
 </div>
+<canvas id="pixelCanvas"></canvas>
 
 
 
@@ -258,6 +259,7 @@
       listenOnlineCount();
       listenVix();
       listenPixels();
+      listenVisiblePixels();
 
     } catch (err) {
       console.error(err);
@@ -396,6 +398,100 @@ document.querySelectorAll('.color-slot').forEach(slot => {
 
     console.log("🎨 Couleur sélectionnée :", selectedColor);
   });
+});
+const canvas = document.getElementById("pixelCanvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// Taille d'un pixel
+const PIXEL_SIZE = 10;
+
+// Zone chargée autour du joueur (en pixels)
+const VIEW_RANGE = 100;
+
+let offsetX = 0;
+let offsetY = 0;
+
+// Adapter le canvas en cas de redimensionnement
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+// Suivi des pixels déjà dessinés
+const drawnPixels = {};
+
+function drawPixel(x, y, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x * PIXEL_SIZE - offsetX, y * PIXEL_SIZE - offsetY, PIXEL_SIZE, PIXEL_SIZE);
+}
+
+function listenVisiblePixels() {
+  const pixelsRef = firebase.database().ref("pixels");
+  pixelsRef.on("child_added", (snapshot) => {
+    const key = snapshot.key; // format "x_y"
+    const data = snapshot.val();
+
+    const [x, y] = key.split("_").map(Number);
+    drawnPixels[key] = data;
+
+    if (isPixelVisible(x, y)) {
+      drawPixel(x, y, data.color);
+    }
+  });
+
+  pixelsRef.on("child_changed", (snapshot) => {
+    const key = snapshot.key;
+    const data = snapshot.val();
+    const [x, y] = key.split("_").map(Number);
+    drawnPixels[key] = data;
+
+    if (isPixelVisible(x, y)) {
+      drawPixel(x, y, data.color);
+    }
+  });
+}
+
+function isPixelVisible(x, y) {
+  const px = x * PIXEL_SIZE - offsetX;
+  const py = y * PIXEL_SIZE - offsetY;
+  return (
+    px >= -PIXEL_SIZE &&
+    px <= canvas.width + PIXEL_SIZE &&
+    py >= -PIXEL_SIZE &&
+    py <= canvas.height + PIXEL_SIZE
+  );
+}
+canvas.addEventListener("click", async (e) => {
+  if (!selectedColor) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX + offsetX - rect.left) / PIXEL_SIZE);
+  const y = Math.floor((e.clientY + offsetY - rect.top) / PIXEL_SIZE);
+
+  const pixelPath = `pixels/${x}_${y}`;
+
+  // Vérifie les pixels restants
+  const pixelRef = firebase.database().ref(`accounts/${uid}/pixels`);
+  const currentPixelSnap = await pixelRef.get();
+  const pixelCount = currentPixelSnap.val() || 0;
+
+  if (pixelCount <= 0) {
+    alert("Tu n'as plus de pixels !");
+    return;
+  }
+
+  // Placer le pixel
+  firebase.database().ref(pixelPath).set({
+    color: selectedColor,
+    placedBy: uid,
+    timestamp: Date.now()
+  });
+
+  // Décrémenter le compte de pixels
+  pixelRef.set(pixelCount - 1);
 });
 
 
