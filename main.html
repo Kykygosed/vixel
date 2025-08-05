@@ -216,9 +216,10 @@ const firebaseConfig = {
           return;
         }
 
-        setupPresence();
-        listenOnlineCount();
-        listenVix();
+setupPresence();
+listenOnlineCount();
+listenVix();
+listenPixels();
       } catch (err) {
         console.error(err);
         alert("Erreur lors de la récupération des données.");
