@@ -209,7 +209,8 @@
   <div class="color-slot purple" data-color="purple"></div>
 </div>
 
-<div id="pixelCanvas" style="display: grid; grid-template-columns: repeat(16, 20px); grid-template-rows: repeat(16, 20px); gap: 1px; margin: 20px auto; width: fit-content;"></div>
+<canvas id="pixelCanvas" width="1000" height="1000" style="border:1px solid #000; display: block; margin: auto; background: white;"></canvas>
+
 
 
 
@@ -400,70 +401,67 @@ document.querySelectorAll('.color-slot').forEach(slot => {
   });
 });
 
-const pixelCanvas = document.getElementById('pixelCanvas');
-const gridSize = 16; // 16x16 pixels grid, tu peux augmenter
+const canvas = document.getElementById("pixelCanvas");
+const ctx = canvas.getContext("2d");
 
-// Création des pixels dans la grille
-for(let i=0; i<gridSize*gridSize; i++) {
-  const pixel = document.createElement('div');
-  pixel.style.width = '20px';
-  pixel.style.height = '20px';
-  pixel.style.backgroundColor = '#fff';
-  pixel.style.border = '1px solid #ccc';
-  pixel.style.boxSizing = 'border-box';
-  pixel.dataset.index = i;
-  pixel.style.cursor = 'pointer';
+const gridWidth = 1000;
+const gridHeight = 1000;
+const pixelSize = 10;
 
-  pixel.addEventListener('click', () => {
-    if (selectedColor === null) {
-      alert('Sélectionne une couleur dans la hotbar !');
-      return;
-    }
-    placePixel(i, selectedColor);
-  });
+let offsetX = 0;
+let offsetY = 0;
+let zoom = 1;
 
-  pixelCanvas.appendChild(pixel);
-}
+let isDragging = false;
+let dragStartX, dragStartY;
 
-// Fonction pour placer un pixel (si tu as assez de pixels)
-function placePixel(index, color) {
-  // Récupère le compteur actuel de pixels (le nombre de "coins" que tu peux dépenser)
-  const pixelRef = firebase.database().ref("accounts/" + uid + "/pixels");
-
-  pixelRef.once('value').then(snap => {
-    let currentPixels = snap.val() || 0;
-    if (currentPixels <= 0) {
-      alert("Tu n'as plus de pixels à placer !");
-      return;
-    }
-
-    // Décrémente le compteur
-    pixelRef.set(currentPixels - 1);
-
-    // Sauvegarde la couleur dans la base pour ce pixel
-    firebase.database().ref("pixels/" + index).set({
-      color: color,
-      placedBy: uid,
-      timestamp: Date.now()
-    });
-  });
-}
-
-// Ecoute en temps réel les changements de tous les pixels pour les afficher
-firebase.database().ref("pixels").on("value", snapshot => {
-  const pixelsData = snapshot.val() || {};
-
-  for(let i=0; i<gridSize*gridSize; i++) {
-    const pixel = pixelCanvas.children[i];
-    if(pixelsData[i] && pixelsData[i].color) {
-      pixel.style.backgroundColor = pixelsData[i].color;
-    } else {
-      pixel.style.backgroundColor = '#fff'; // pixel vide
-    }
+// Déplacement souris pour déplacer la grille
+canvas.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  dragStartX = e.offsetX;
+  dragStartY = e.offsetY;
+});
+canvas.addEventListener("mouseup", () => {
+  isDragging = false;
+});
+canvas.addEventListener("mousemove", (e) => {
+  if (isDragging) {
+    offsetX += (e.offsetX - dragStartX);
+    offsetY += (e.offsetY - dragStartY);
+    dragStartX = e.offsetX;
+    dragStartY = e.offsetY;
+    drawPixels();
   }
 });
 
+// Zoom avec la molette
+canvas.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const scale = e.deltaY < 0 ? 1.1 : 0.9;
+  zoom *= scale;
+  drawPixels();
+});
 
+// Clic sur le canvas pour placer un pixel
+canvas.addEventListener("click", (e) => {
+  if (!selectedColor) {
+    alert("Sélectionne une couleur !");
+    return;
+  }
+
+  const x = Math.floor((e.offsetX - offsetX) / (pixelSize * zoom));
+  const y = Math.floor((e.offsetY - offsetY) / (pixelSize * zoom));
+
+  placePixel(x, y, selectedColor);
+});
+
+// Dessin des pixels existants
+const pixels = {};
+
+function drawPixels() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (l
 
   </script>
 </body>
