@@ -258,6 +258,25 @@
 
 </head>
 <body>
+ <div id="loadingScreen">
+  Chargement...
+</div>
+
+<style>
+  #loadingScreen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: black;
+    color: white;
+    font-size: 2em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+</style>
    <div class="topbar">
     <div class="presence">
       <img src="online.png" alt="Online" />
@@ -1197,6 +1216,12 @@ firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap =
   });
 });
 
+window.addEventListener('load', () => {
+  const loadingScreen = document.getElementById('loadingScreen');
+  if (loadingScreen) {
+    loadingScreen.style.display = 'none';
+  }
+});
 
 
   </script>
