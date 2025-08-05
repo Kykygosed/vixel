@@ -75,11 +75,11 @@ const firebaseConfig = {
           }
 
           // 🔍 Lit la balance depuis users/{ID}/balance
-          firebase.database().ref("users/" + discordId + "/balance").once("value")
-            .then(balanceSnap => {
-              const vix = balanceSnap.val();
-              vixDiv.textContent = vix !== null ? vix + " VIX" : "0 VIX";
-            })
+         firebase.database().ref("users/" + discordId + "/balance").on("value", balanceSnap => {
+  const vix = balanceSnap.val();
+  vixDiv.textContent = vix !== null ? vix + " VIX" : "0 VIX";
+});
+
             .catch(err => {
               vixDiv.textContent = "Erreur chargement des VIX.";
               console.error(err);
