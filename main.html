@@ -220,6 +220,28 @@
   color: white;
   cursor: pointer;
 }
+.value-change {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-family: 'Press Start 2P', cursive;
+  pointer-events: none;
+  opacity: 1;
+  animation: riseAndFade 1s ease-out forwards;
+  z-index: 9999;
+}
+
+@keyframes riseAndFade {
+  0% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-20px);
+    opacity: 0;
+  }
+}
 
   </style>
 </head>
@@ -426,7 +448,10 @@ firebase.database().ref("pixels").on("value", snapshot => {
     });
   }
 
-  function listenVix() {
+
+let lastVixValue = null;
+
+function listenVix() {
   firebase.database().ref("accounts/" + uid + "/link").once("value").then(linkSnap => {
     const linkedId = linkSnap.val();
 
@@ -437,19 +462,41 @@ firebase.database().ref("pixels").on("value", snapshot => {
     }
 
     firebase.database().ref("users/" + linkedId + "/balance").on("value", snapshot => {
-      const vix = snapshot.val();
-      vixCountSpan.textContent = (vix !== null ? vix : 0) + " VIX";
+      const vix = snapshot.val() !== null ? snapshot.val() : 0;
+      vixCountSpan.textContent = vix + " VIX";
+
+      if (lastVixValue !== null) {
+        const diff = vix - lastVixValue;
+        if (diff !== 0) {
+          showValueChange(vixCountSpan, diff, diff > 0 ? "lime" : "red");
+        }
+      }
+
+      lastVixValue = vix;
     });
   });
 }
 
 
-  function listenPixels() {
-    firebase.database().ref("accounts/" + uid + "/pixels").on("value", snapshot => {
-      const pixels = snapshot.val();
-      pixelCountSpan.textContent = (pixels !== null ? pixels : 0) + " Pixels";
-    });
-  }
+
+  let lastPixelValue = null;
+
+function listenPixels() {
+  firebase.database().ref("accounts/" + uid + "/pixels").on("value", snapshot => {
+    const pixels = snapshot.val() !== null ? snapshot.val() : 0;
+    pixelCountSpan.textContent = pixels + " Pixels";
+
+    if (lastPixelValue !== null) {
+      const diff = pixels - lastPixelValue;
+      if (diff !== 0) {
+        showValueChange(pixelCountSpan, diff, diff > 0 ? "lime" : "red");
+      }
+    }
+
+    lastPixelValue = pixels;
+  });
+}
+
 
   function openShop() {
     shopPopup.style.display = "flex";
@@ -647,6 +694,25 @@ document.addEventListener("mousemove", (e) => {
     timestamp: Date.now()
   });
 });
+function showValueChange(element, amount, color = "lime") {
+  const changeEl = document.createElement("div");
+  changeEl.className = "value-change";
+  changeEl.style.color = color;
+  changeEl.textContent = (amount > 0 ? "+" : "") + amount;
+
+  // Positionner par rapport à l'élément
+  const rect = element.getBoundingClientRect();
+  changeEl.style.top = rect.bottom + "px";
+  changeEl.style.left = rect.left + rect.width / 2 + "px";
+
+  document.body.appendChild(changeEl);
+
+  // Le retirer après l'animation
+  setTimeout(() => {
+    changeEl.remove();
+  }, 1000);
+}
+
 let pixelPlacementEnabled = true; // par défaut : placement activé
 
 const brushBtn = document.getElementById("brushButton");
