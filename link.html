@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Liez votre compte</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
+  <meta charset="UTF-8">
+  <title>Lier compte Discord</title>
+ <style>
     /* Reset & font */
     * {
       box-sizing: border-box;
@@ -143,13 +142,13 @@
   </style>
 </head>
 <body>
-  <div class="box" role="main" aria-label="Formulaire de liaison du compte Discord">
+  <div class="box">
     <h1>Liez votre compte Discord</h1>
     <p>Dans le salon dédié aux commandes, faites la commande :</p>
     <div class="highlight">!link</div>
     <p>Le bot vous enverra une clé en MP. Copiez-collez la ici :</p>
-    <input type="text" id="discordId" placeholder="Clé reçue (votre ID Discord)" autocomplete="off" aria-label="Clé reçue de Discord" />
-    <button onclick="linkDiscord()" aria-label="Lier le compte Discord">Continuer !</button>
+    <input type="text" id="discordId" placeholder="Clé reçue (votre ID Discord)">
+    <button onclick="linkDiscord()">Continuer !</button>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -157,20 +156,21 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
-      authDomain: "kychat-45596.firebaseapp.com",
-      databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
-      projectId: "kychat-45596",
-      storageBucket: "kychat-45596.firebasestorage.app",
-      messagingSenderId: "104462848972",
-      appId: "1:104462848972:web:7ac49e63008e9a11150369"
-    };
+    // 🔧 Même config que index.html
+const firebaseConfig = {
+  apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
+  authDomain: "kychat-45596.firebaseapp.com",
+  databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
+  projectId: "kychat-45596",
+  storageBucket: "kychat-45596.firebasestorage.app",
+  messagingSenderId: "104462848972",
+  appId: "1:104462848972:web:7ac49e63008e9a11150369"
+};
 
     firebase.initializeApp(firebaseConfig);
 
     function linkDiscord() {
-      const discordId = document.getElementById("discordId").value.trim();
+      const discordId = document.getElementById("discordId").value;
       const user = firebase.auth().currentUser;
 
       if (!discordId || !user) {
@@ -186,6 +186,7 @@
         .catch(err => alert("Erreur : " + err.message));
     }
 
+    // S'assurer que l'utilisateur est bien connecté, sinon redirection
     firebase.auth().onAuthStateChanged(user => {
       if (!user) {
         window.location.href = "index.html";
