@@ -242,6 +242,16 @@
     opacity: 0;
   }
 }
+@keyframes riseAndFade {
+  0% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-20px);
+    opacity: 0;
+  }
+}
 
   </style>
 </head>
@@ -261,7 +271,8 @@
   <span id="pixelCount">0 Pixels</span>
 </div>
 
-  
+  <div id="vix-timer" style="font-size: 12px; font-family: 'Press Start 2P', cursive;">00:00</div>
+
     <div class="vix-container">
       <img src="vix.png" alt="VIX" />
       <span id="vixCount">0 VIX</span>
@@ -497,6 +508,52 @@ function listenPixels() {
   });
 }
 
+let vixTimerInterval = null;
+let vixSeconds = 0;
+let isPageVisible = true;
+
+function startVixTimer() {
+  vixTimerInterval = setInterval(() => {
+    if (isPageVisible) {
+      vixSeconds++;
+      updateVixTimerDisplay();
+
+      if (vixSeconds >= 60) {
+        vixSeconds = 0;
+        addVix(5);
+      }
+    }
+  }, 1000);
+}
+
+function updateVixTimerDisplay() {
+  const minutes = Math.floor(vixSeconds / 60).toString().padStart(2, "0");
+  const seconds = (vixSeconds % 60).toString().padStart(2, "0");
+  document.getElementById("vix-timer").textContent = `${minutes}:${seconds}`;
+}
+
+function addVix(amount) {
+  firebase.database().ref("accounts/" + uid + "/link").once("value").then(linkSnap => {
+    const linkedId = linkSnap.val();
+    if (!linkedId) return;
+
+    const balanceRef = firebase.database().ref("users/" + linkedId + "/balance");
+    balanceRef.transaction(current => {
+      return (current || 0) + amount;
+    });
+
+    // Animation +X
+    showValueChange(vixCountSpan, amount, "lime");
+  });
+}
+
+// Pause/reprise du minuteur selon l'état de la page
+document.addEventListener("visibilitychange", () => {
+  isPageVisible = document.visibilityState === "visible";
+});
+
+// Démarrage du minuteur après connexion
+startVixTimer();
 
   function openShop() {
     shopPopup.style.display = "flex";
