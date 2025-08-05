@@ -1,92 +1,156 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Mon compte</title>
+  <meta charset="UTF-8" />
+  <title>Main - VIX & Présence</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #e8f0fe;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+    }
+    .topbar {
       display: flex;
-      justify-content: center;
       align-items: center;
-      height: 100vh;
+      justify-content: space-between;
+      background: #222;
+      padding: 10px 20px;
+      color: white;
+      user-select: none;
     }
-    .box {
-      background: white;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      text-align: center;
-      width: 350px;
+    .presence {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
     }
-    h1 {
-      margin-bottom: 20px;
+    .presence img {
+      width: 24px;
+      height: 24px;
     }
-    .vix-count {
-      font-size: 40px;
+    .shop-btn {
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+    }
+    .vix-container {
+      background: #888888cc; /* rectangle gris transparent */
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
       font-weight: bold;
-      color: #2c3e50;
+      font-size: 16px;
+    }
+    .vix-container img {
+      width: 24px;
+      height: 24px;
     }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>Bienvenue !</h1>
-    <p>Ton solde de VIX :</p>
-    <div class="vix-count" id="vix">Chargement...</div>
+  <div class="topbar">
+    <div class="presence">
+      <img src="online.png" alt="Online" />
+      <span id="onlineCount">0</span>
+    </div>
+    <img src="shop.png" alt="Boutique" class="shop-btn" title="Boutique" />
+    <div class="vix-container">
+      <img src="vix.png" alt="VIX" />
+      <span id="vixCount">0 VIX</span>
+    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<script>
-  // 🔧 Configuration Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
-    authDomain: "kychat-45596.firebaseapp.com",
-    databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
-    projectId: "kychat-45596",
-    storageBucket: "kychat-45596.appspot.com",
-    messagingSenderId: "104462848972",
-    appId: "1:104462848972:web:7ac49e63008e9a11150369"
-  };
+  <script>
+    // 🔧 Config Firebase (à adapter)
+const firebaseConfig = {
+  apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
+  authDomain: "kychat-45596.firebaseapp.com",
+  databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
+  projectId: "kychat-45596",
+  storageBucket: "kychat-45596.firebasestorage.app",
+  messagingSenderId: "104462848972",
+  appId: "1:104462848972:web:7ac49e63008e9a11150369"
+};
 
-  // 🔌 Initialisation
-  firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
 
-  const vixDiv = document.getElementById("vix");
+    const onlineCountSpan = document.getElementById("onlineCount");
+    const vixCountSpan = document.getElementById("vixCount");
 
-  firebase.auth().onAuthStateChanged(user => {
-    if (!user) {
-      window.location.href = "index.html";
-      return;
-    }
+    let uid, discordId;
+    let presenceRef;
 
-    const uid = user.uid;
+    firebase.auth().onAuthStateChanged(async user => {
+      if (!user) {
+        // Pas connecté → renvoyer vers index.html
+        window.location.href = "index.html";
+        return;
+      }
 
-    // 🔁 Récupère l’ID Discord lié à ce compte
-    firebase.database().ref("accounts/" + uid + "/link").once("value")
-      .then(snapshot => {
-        const discordId = snapshot.val();
+      uid = user.uid;
+
+      try {
+        // Récupérer le Discord ID lié
+        const linkSnap = await firebase.database().ref("accounts/" + uid + "/link").once("value");
+        discordId = linkSnap.val();
+
         if (!discordId) {
-          vixDiv.textContent = "❌ Aucun compte Discord lié.";
+          alert("Aucun compte Discord lié, merci de le faire sur link.html");
+          window.location.href = "link.html";
           return;
         }
 
-        // 🔄 Écoute en temps réel la balance de l’utilisateur Discord
-        firebase.database().ref("users/" + discordId + "/balance").on("value", balanceSnap => {
-          const vix = balanceSnap.val();
-          vixDiv.textContent = vix !== null ? vix + " VIX" : "0 VIX";
-        });
-      })
-      .catch(err => {
-        vixDiv.textContent = "Erreur lors de la récupération du lien Discord.";
+        setupPresence();
+        listenOnlineCount();
+        listenVix();
+      } catch (err) {
         console.error(err);
-      });
-  });
-</script>
+        alert("Erreur lors de la récupération des données.");
+      }
+    });
 
+    // Met en place la présence et l'actualisation à true/false
+    function setupPresence() {
+      presenceRef = firebase.database().ref("presence/" + uid);
+
+      // À l'arrivée : on met true
+      presenceRef.set(true);
+
+      // On met false en quittant la page
+      window.addEventListener("beforeunload", () => {
+        presenceRef.set(false);
+      });
+
+      // (Optionnel) Si tu veux que si la connexion tombe la valeur repasse à false automatiquement,
+      // tu peux utiliser onDisconnect():
+      presenceRef.onDisconnect().set(false);
+    }
+
+    // Compte et affiche le nombre d'utilisateurs en ligne
+    function listenOnlineCount() {
+      firebase.database().ref("presence").on("value", snapshot => {
+        const presenceData = snapshot.val() || {};
+        let count = 0;
+        for (const key in presenceData) {
+          if (presenceData[key] === true) count++;
+        }
+        onlineCountSpan.textContent = count;
+      });
+    }
+
+    // Affiche en temps réel le nombre de VIX de l'utilisateur discord
+    function listenVix() {
+      firebase.database().ref("users/" + discordId + "/balance").on("value", snapshot => {
+        const vix = snapshot.val();
+        vixCountSpan.textContent = (vix !== null ? vix : 0) + " VIX";
+      });
+    }
+  </script>
 </body>
 </html>
