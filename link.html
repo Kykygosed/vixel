@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Lier compte Discord</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #eef2f3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .box {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      width: 400px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+    }
+    p {
+      font-size: 14px;
+      color: #444;
+    }
+    .highlight {
+      background: #ddd;
+      padding: 8px 12px;
+      font-weight: bold;
+      font-family: monospace;
+      display: inline-block;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 20px;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      background: #28a745;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Liez votre compte Discord</h1>
+    <p>Dans le salon dédié aux commandes, faites la commande :</p>
+    <div class="highlight">!link</div>
+    <p>Le bot vous enverra une clé en MP. Copiez-collez la ici :</p>
+    <input type="text" id="discordId" placeholder="Clé reçue (votre ID Discord)">
+    <button onclick="linkDiscord()">Continuer !</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script>
+    // 🔧 Même config que index.html
+    const firebaseConfig = {
+      apiKey: "TON_API_KEY",
+      authDomain: "TON_PROJET.firebaseapp.com",
+      databaseURL: "https://TON_PROJET.firebaseio.com",
+      projectId: "TON_PROJET",
+      storageBucket: "TON_PROJET.appspot.com",
+      messagingSenderId: "TON_ID",
+      appId: "TON_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    function linkDiscord() {
+      const discordId = document.getElementById("discordId").value;
+      const user = firebase.auth().currentUser;
+
+      if (!discordId || !user) {
+        alert("Veuillez entrer une clé valide.");
+        return;
+      }
+
+      firebase.database().ref("accounts/" + user.uid + "/link").set(discordId)
+        .then(() => {
+          alert("✅ Compte lié avec succès !");
+          window.location.href = "main.html";
+        })
+        .catch(err => alert("Erreur : " + err.message));
+    }
+
+    // S'assurer que l'utilisateur est bien connecté, sinon redirection
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "index.html";
+      }
+    });
+  </script>
+</body>
+</html>
