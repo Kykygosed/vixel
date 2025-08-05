@@ -1,57 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <title>Connexion / Inscription</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      width: 300px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    h2 {
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-  <h1>Bienvenue</h1>
-  <button id="loginBtn">Connexion / Inscription</button>
+  <div class="box">
+    <h2>Connexion / Inscription</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Mot de passe">
+    <button onclick="login()">Connexion / Inscription</button>
+  </div>
 
-  <!-- Firebase Scripts -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <script>
-    // ✅ Configuration Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
-      authDomain: "kychat-45596.firebaseapp.com",
-      databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
-      projectId: "kychat-45596",
-      storageBucket: "kychat-45596.appspot.com",
-      messagingSenderId: "104462848972",
-      appId: "1:104462848972:web:7ac49e63008e9a11150369"
-    };
+    // 🔧 CONFIG FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
+  authDomain: "kychat-45596.firebaseapp.com",
+  databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
+  projectId: "kychat-45596",
+  storageBucket: "kychat-45596.firebasestorage.app",
+  messagingSenderId: "104462848972",
+  appId: "1:104462848972:web:7ac49e63008e9a11150369"
+};
 
-    // ✅ Initialiser Firebase
     firebase.initializeApp(firebaseConfig);
 
-    const loginBtn = document.getElementById("loginBtn");
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
 
-    loginBtn.addEventListener("click", async () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          const uid = userCredential.user.uid;
+          checkDiscordLink(uid);
+        })
+        .catch(error => {
+          // Si aucun compte trouvé, créer un nouveau
+          firebase.auth().createUserWithEmailAndPassword(email, password)
+            .then(userCredential => {
+              const uid = userCredential.user.uid;
+              firebase.database().ref("accounts/" + uid).set({
+                email: email,
+                createdAt: Date.now()
+              }).then(() => {
+                window.location.href = "link.html";
+              });
+            })
+            .catch(err => alert("Erreur : " + err.message));
+        });
+    }
 
-      try {
-        const result = await firebase.auth().signInWithPopup(provider);
-        const user = result.user;
-        const uid = user.uid;
-
-        // 🔎 Vérifie si le lien Discord existe
-        const snapshot = await firebase.database().ref("accounts/" + uid + "/link").once("value");
-
-        if (snapshot.exists()) {
-          window.location.href = "main.html"; // ✅ Lien déjà fait
-        } else {
-          window.location.href = "link.html"; // ❌ Pas encore lié
-        }
-
-      } catch (error) {
-        console.error("Erreur de connexion :", error);
-        alert("❌ Erreur de connexion !");
-      }
-    });
+    function checkDiscordLink(uid) {
+      firebase.database().ref("accounts/" + uid + "/link").once("value")
+        .then(snapshot => {
+          if (snapshot.exists()) {
+            // ✅ Déjà lié
+            window.location.href = "main.html";
+          } else {
+            // ❌ Pas encore lié
+            window.location.href = "link.html";
+          }
+        })
+        .catch(err => {
+          console.error("Erreur lors de la vérification du lien Discord :", err);
+          alert("Erreur de connexion.");
+        });
+    }
   </script>
 </body>
 </html>
