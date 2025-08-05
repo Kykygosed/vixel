@@ -9,8 +9,6 @@
       font-family: 'Press Start 2P', cursive;
       background: #f0f0f0;
       cursor: url('cursor.png') 16 16, auto;
-      overscroll-behavior: none;
-  touch-action: none;
     }
     .topbar {
       display: flex;
@@ -222,10 +220,6 @@
   color: white;
   cursor: pointer;
 }
-canvas {
-  transition: transform 0.05s linear;
-  transform-origin: top left;
-}
 
   </style>
 </head>
@@ -370,13 +364,6 @@ canvas {
 
   let uid, discordId, presenceRef;
  let pixelsData = {}; // clé: "x_y", valeur: { color: "...", author: "..." }
-let scale = 1;
-let translateX = 0;
-let translateY = 0;
-
-let lastTouchDist = null;
-let lastTouchPos = null;
-canvas.style.touchAction = "none";
 
 // Exemple d'écoute Firebase
 firebase.database().ref("pixels").on("value", snapshot => {
@@ -427,9 +414,6 @@ firebase.database().ref("pixels").on("value", snapshot => {
     });
     presenceRef.onDisconnect().set(false);
   }
-function updateCanvasTransform() {
-  canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-}
 
   function listenOnlineCount() {
     firebase.database().ref("presence").on("value", snapshot => {
@@ -918,51 +902,6 @@ canvas.addEventListener("mousemove", async (e) => {
 // Si la souris sort du canvas → cacher l’infos
 canvas.addEventListener("mouseleave", () => {
   pixelInfoBox.style.display = "none";
-});
-canvas.addEventListener("touchstart", (e) => {
-  if (e.touches.length === 1) {
-    lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  } else if (e.touches.length === 2) {
-    const dx = e.touches[0].clientX - e.touches[1].clientX;
-    const dy = e.touches[0].clientY - e.touches[1].clientY;
-    lastTouchDist = Math.hypot(dx, dy);
-  }
-});
-
-canvas.addEventListener("touchmove", (e) => {
-  e.preventDefault();
-
-  if (e.touches.length === 1 && lastTouchPos) {
-    // Pan
-    const dx = e.touches[0].clientX - lastTouchPos.x;
-    const dy = e.touches[0].clientY - lastTouchPos.y;
-    translateX += dx;
-    translateY += dy;
-    lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    updateCanvasTransform();
-  } else if (e.touches.length === 2) {
-    // Pinch zoom
-    const dx = e.touches[0].clientX - e.touches[1].clientX;
-    const dy = e.touches[0].clientY - e.touches[1].clientY;
-    const dist = Math.hypot(dx, dy);
-
-    if (lastTouchDist) {
-      const zoom = dist / lastTouchDist;
-      scale *= zoom;
-      scale = Math.max(0.5, Math.min(5, scale)); // Limite le zoom
-      lastTouchDist = dist;
-      updateCanvasTransform();
-    }
-  }
-}, { passive: false });
-
-canvas.addEventListener("touchend", (e) => {
-  if (e.touches.length < 2) {
-    lastTouchDist = null;
-  }
-  if (e.touches.length === 0) {
-    lastTouchPos = null;
-  }
 });
 
   </script>
