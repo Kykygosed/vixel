@@ -461,7 +461,58 @@ const pixels = {};
 function drawPixels() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  for (l
+  for (let key in pixels) {
+    const [x, y] = key.split(":").map(Number);
+    const color = pixels[key];
+    ctx.fillStyle = color;
+    ctx.fillRect(
+      x * pixelSize * zoom + offsetX,
+      y * pixelSize * zoom + offsetY,
+      pixelSize * zoom,
+      pixelSize * zoom
+    );
+  }
+}
+
+// Sauvegarde le pixel dans Firebase
+function placePixel(x, y, color) {
+  const coordKey = `${x}:${y}`;
+  const pixelRef = firebase.database().ref("accounts/" + uid + "/pixels");
+
+  pixelRef.once('value').then(snap => {
+    let currentPixels = snap.val() || 0;
+    if (currentPixels <= 0) {
+      alert("Tu n'as plus de pixels !");
+      return;
+    }
+
+    // Décrémente
+    pixelRef.set(currentPixels - 1);
+
+    // Place le pixel
+    firebase.database().ref("pixels/" + coordKey).set({
+      color: color,
+      placedBy: uid,
+      timestamp: Date.now()
+    });
+  });
+}
+
+// Sync Firebase en temps réel
+firebase.database().ref("pixels").on("child_added", (snapshot) => {
+  const key = snapshot.key;
+  const data = snapshot.val();
+  pixels[key] = data.color;
+  drawPixels();
+});
+
+firebase.database().ref("pixels").on("child_changed", (snapshot) => {
+  const key = snapshot.key;
+  const data = snapshot.val();
+  pixels[key] = data.color;
+  drawPixels();
+});
+
 
   </script>
 </body>
