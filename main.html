@@ -801,42 +801,6 @@ firebase.database().ref("chat").limitToLast(20).on("child_added", snapshot => {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
-const canvas = document.getElementById("pixelCanvas");
-const ctx = canvas.getContext("2d");
-const pixelSize = 1; // si chaque pixel fait 1x1 px sur le canvas, adapte sinon
-
-const tooltip = document.createElement("div");
-tooltip.style.position = "fixed";
-tooltip.style.background = "rgba(0,0,0,0.8)";
-tooltip.style.color = "white";
-tooltip.style.padding = "4px 6px";
-tooltip.style.borderRadius = "4px";
-tooltip.style.pointerEvents = "none";
-tooltip.style.fontSize = "12px";
-tooltip.style.fontFamily = "'Press Start 2P', cursive";
-tooltip.style.display = "none";
-document.body.appendChild(tooltip);
-
-canvas.addEventListener("mousemove", e => {
-  const rect = canvas.getBoundingClientRect();
-  const x = Math.floor((e.clientX - rect.left) / pixelSize);
-  const y = Math.floor((e.clientY - rect.top) / pixelSize);
-  const key = `${x}_${y}`;
-  
-  if (pixelsData[key]) {
-    tooltip.style.display = "block";
-    tooltip.style.left = `${e.clientX + 10}px`;
-    tooltip.style.top = `${e.clientY + 10}px`;
-    tooltip.textContent = `Posé par : ${pixelsData[key].author}`;
-  } else {
-    tooltip.style.display = "none";
-  }
-});
-
-canvas.addEventListener("mouseleave", () => {
-  tooltip.style.display = "none";
-});
-
   </script>
 </body>
 </html>
