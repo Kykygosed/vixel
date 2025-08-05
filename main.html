@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Main - VIX & Présence</title>
+  <title>Main - VIX & Présen</title>
 <style>
     body {
       margin: 0;
@@ -237,6 +237,7 @@
 let scale = 1;           // facteur de zoom
 let offsetX = 0;         // décalage X (pan)
 let offsetY = 0;         // décalage Y (pan)
+const BASE_PIXEL_SIZE = 10; // ou la taille de pixel que tu veux
 
 
   let uid, discordId, presenceRef;
@@ -482,35 +483,29 @@ function isPixelVisible(x, y) {
 }
 
 canvas.addEventListener("click", function(event) {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
+  // Récupérer la position du canvas dans la page
+  const rect = canvas.getBoundingClientRect();
 
-    const x = Math.floor((mouseX - offsetX) / scale);
-    const y = Math.floor((mouseY - offsetY) / scale);
+  // Calculer les coordonnées relatives au canvas
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
 
-    if (balance >= 10) {
-        const pixelPath = "pixels/" + x + "_" + y;
-        const pixelRef = firebase.database().ref(pixelPath);
+  // Adapter selon le zoom et décalage
+  const canvasX = (x / scale) + offsetX;
+  const canvasY = (y / scale) + offsetY;
 
-        const uid = firebase.auth().currentUser ? firebase.auth().currentUser.uid : "invité";
+  // Calculer la position du pixel sur la grille
+  const pixelX = Math.floor(canvasX / BASE_PIXEL_SIZE) * BASE_PIXEL_SIZE;
+  const pixelY = Math.floor(canvasY / BASE_PIXEL_SIZE) * BASE_PIXEL_SIZE;
 
-        // Placer le pixel
-        pixelRef.set({
-            x,
-            y,
-            color: selectedColor,
-            placedBy: uid,
-            timestamp: Date.now()
-        });
+  // Dessiner le pixel à la position correcte
+  ctx.fillStyle = selectedColor || "black";
+  ctx.fillRect(pixelX, pixelY, BASE_PIXEL_SIZE, BASE_PIXEL_SIZE);
 
-        // Décrémenter la balance
-        balance -= 10;
-        updateBalance();
-    } else {
-        alert("Pas assez de balance !");
-    }
+  console.log("Pixel placé en:", pixelX, pixelY);
 });
+
+
 
 
 canvas.addEventListener("wheel", (e) => {
