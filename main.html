@@ -457,6 +457,7 @@ firebase.auth().onAuthStateChanged(async user => {
     listenOnlineCount();
     listenVix();
     listenPixels();
+    initializeUserIfFirstTime(uid);
 
     // 🔽 Stocke le pseudo localement pour le chat
     localPseudo = pseudo;
@@ -536,6 +537,27 @@ firebase.auth().onAuthStateChanged(async user => {
   }
 });
 
+function initializeUserIfFirstTime(uid) {
+  const userRef = firebase.database().ref("users/" + uid);
+  const accountRef = firebase.database().ref("accounts/" + uid);
+
+  userRef.once("value").then(snapshot => {
+    if (!snapshot.exists()) {
+      // Si les données n'existent pas => première connexion
+      userRef.set({
+        balance: 50 // 50 VIX
+      });
+      accountRef.set({
+        pixels: 50
+      });
+      console.log("Compte initialisé avec 50 VIX et 50 pixels.");
+    } else {
+      console.log("Compte déjà initialisé.");
+    }
+  }).catch(error => {
+    console.error("Erreur lors de l'initialisation du compte :", error);
+  });
+}
 
 
 
