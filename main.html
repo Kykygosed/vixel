@@ -366,7 +366,7 @@
       return;
     }
 
-    firebase.database().ref("users/" + linkedId + "/vix").on("value", snapshot => {
+    firebase.database().ref("users/" + linkedId + "/balance").on("value", snapshot => {
       const vix = snapshot.val();
       vixCountSpan.textContent = (vix !== null ? vix : 0) + " VIX";
     });
@@ -454,7 +454,7 @@
       return;
     }
 
-    const userVixRef = firebase.database().ref("users/" + linkedId + "/vix");
+    const userVixRef = firebase.database().ref("users/" + linkedId + "/balance");
     const pixelRef = firebase.database().ref("accounts/" + uid + "/pixels");
 
     // 2. Lire le solde actuel en VIX
