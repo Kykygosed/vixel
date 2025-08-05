@@ -353,11 +353,22 @@
   }
 
   function listenVix() {
-    firebase.database().ref("users/" + discordId + "/balance").on("value", snapshot => {
+  firebase.database().ref("accounts/" + uid + "/link").once("value").then(linkSnap => {
+    const linkedId = linkSnap.val();
+
+    if (!linkedId) {
+      vixCountSpan.textContent = "0 VIX";
+      console.warn("Aucun ID lié trouvé dans 'link'.");
+      return;
+    }
+
+    firebase.database().ref("users/" + linkedId + "/vix").on("value", snapshot => {
       const vix = snapshot.val();
       vixCountSpan.textContent = (vix !== null ? vix : 0) + " VIX";
     });
-  }
+  });
+}
+
 
   function listenPixels() {
     firebase.database().ref("accounts/" + uid + "/pixels").on("value", snapshot => {
@@ -430,27 +441,45 @@
 
 
   function buyPixels(pixelsToAdd, vixCost) {
-    const userRef = firebase.database().ref("users/" + discordId + "/balance");
+  // 1. Récupérer le lien vers l'ID de l'utilisateur (link)
+  firebase.database().ref("accounts/" + uid + "/link").once("value").then(linkSnap => {
+    const linkedId = linkSnap.val();
+
+    if (!linkedId) {
+      alert("Impossible d'acheter : identifiant lié non trouvé.");
+      return;
+    }
+
+    const userVixRef = firebase.database().ref("users/" + linkedId + "/vix");
     const pixelRef = firebase.database().ref("accounts/" + uid + "/pixels");
 
-    userRef.once("value").then(vixSnap => {
+    // 2. Lire le solde actuel en VIX
+    userVixRef.once("value").then(vixSnap => {
       const currentVix = vixSnap.val() || 0;
 
+      // 3. Vérifier si l'utilisateur a assez de VIX
       if (currentVix < vixCost) {
         alert("Pas assez de VIX !");
         return;
       }
 
-      userRef.set(currentVix - vixCost);
+      // 4. Déduire les VIX
+      userVixRef.set(currentVix - vixCost);
 
+      // 5. Ajouter les pixels
       pixelRef.once("value").then(pixelSnap => {
         const currentPixels = pixelSnap.val() || 0;
         pixelRef.set(currentPixels + pixelsToAdd);
       });
 
+      // 6. Confirmation
       alert("Achat réussi !");
     });
-  }
+  }).catch(error => {
+    console.error("Erreur lors de l'achat :", error);
+    alert("Une erreur est survenue pendant l'achat.");
+  });
+}
 
 let selectedColor = null;
 
