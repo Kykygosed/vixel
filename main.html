@@ -463,12 +463,10 @@ firebase.auth().onAuthStateChanged(async user => {
   }
 
   uid = user.uid;
-
-  // 🔽 Supprime tout ancien listener pour éviter doublons
   firebase.database().ref("chat").off();
 
   try {
-    // 🔽 Récupération de l'IP client
+    // 🔽 Récupération IP
     const getClientIP = async () => {
       const response = await fetch("https://api.ipify.org?format=json");
       const data = await response.json();
@@ -476,8 +474,6 @@ firebase.auth().onAuthStateChanged(async user => {
     };
 
     const currentIP = await getClientIP();
-
-    // 🔽 Vérification IP
     const ipSnap = await firebase.database().ref("accounts/" + uid + "/connectedIP").once("value");
     const savedIP = ipSnap.val();
 
@@ -487,10 +483,8 @@ firebase.auth().onAuthStateChanged(async user => {
       return;
     }
 
-    // 🔽 Enregistrement ou mise à jour de l'IP
     await firebase.database().ref("accounts/" + uid + "/connectedIP").set(currentIP);
 
-    // 🔽 Récupérer le pseudo
     const pseudoSnap = await firebase.database().ref("accounts/" + uid + "/pseudo").once("value");
     const pseudo = pseudoSnap.val();
 
@@ -499,17 +493,28 @@ firebase.auth().onAuthStateChanged(async user => {
       return;
     }
 
-    // 🔽 Lancer les fonctions liées à l'utilisateur connecté
+    localPseudo = pseudo;
+
     setupPresence();
     listenOnlineCount();
     listenVix();
     listenPixels();
     initializeUserIfFirstTime(uid);
 
-    // 🔽 Stocke le pseudo localement pour le chat
-    localPseudo = pseudo;
+    // ✅ CHRONO — RESTAURATION depuis Firebase
+    const timerSnap = await firebase.database().ref("accounts/" + uid + "/timer").once("value");
+    const savedTimer = timerSnap.val(); // Format "MM:SS"
 
-    // 🔽 Écouter les nouveaux messages du chat
+    if (savedTimer) {
+      const [min, sec] = savedTimer.split(":").map(n => parseInt(n, 10));
+      vixSeconds = min * 60 + sec;
+    } else {
+      vixSeconds = 0;
+    }
+
+    startVixTimer(); // 🕒 Lance le chrono une fois le compte prêt
+
+    // ✅ CHAT — écoute des messages
     firebase.database().ref("chat").off("child_added");
     firebase.database().ref("chat").limitToLast(20).on("child_added", async snapshot => {
       const data = snapshot.val();
@@ -523,7 +528,6 @@ firebase.auth().onAuthStateChanged(async user => {
       let messageHTML = data.message;
       let isMentioned = false;
 
-      // Mentions
       if (localPseudo && data.message.includes("@" + localPseudo)) {
         isMentioned = true;
         const regex = new RegExp("@" + localPseudo + "\\b", "g");
@@ -532,7 +536,6 @@ firebase.auth().onAuthStateChanged(async user => {
         ping.play().catch(e => console.warn("Erreur lecture audio:", e));
       }
 
-      // Rank admin ?
       let isAdmin = false;
       try {
         const userSnap = await firebase.database().ref("accounts").orderByChild("pseudo").equalTo(data.pseudo).once("value");
@@ -565,10 +568,8 @@ firebase.auth().onAuthStateChanged(async user => {
 
       chatMessages.scrollTop = chatMessages.scrollHeight;
 
-      // ✅ Message de bienvenue local à l'utilisateur
       if (!chatInitialized) {
         chatInitialized = true;
-
         setTimeout(() => {
           const welcomeLine = document.createElement("div");
           welcomeLine.innerHTML = `<span style="color: yellow;">Bienvenue sur Vixel! Pour la liste des commandes, faites <strong>/help</strong></span>`;
@@ -583,6 +584,7 @@ firebase.auth().onAuthStateChanged(async user => {
     alert("Erreur lors de la récupération des données.");
   }
 });
+
 
 
 function initializeUserIfFirstTime(uid) {
@@ -758,18 +760,37 @@ let vixSeconds = 0;
 let isPageVisible = true;
 
 function startVixTimer() {
-  vixTimerInterval = setInterval(() => {
-    if (isPageVisible) {
-      vixSeconds++;
-      updateVixTimerDisplay();
+  setInterval(() => {
+    if (!isPageVisible || !uid) return;
 
-      if (vixSeconds >= 60) {
-        vixSeconds = 0;
-        addVix(5);
-      }
+    vixSeconds++;
+
+    // Calcul des minutes et secondes
+    const minutes = Math.floor(vixSeconds / 60);
+    const seconds = vixSeconds % 60;
+
+    const timeString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+    // Affiche dans la page
+    const timerDisplay = document.getElementById("vix-timer");
+    if (timerDisplay) {
+      timerDisplay.textContent = `Temps: ${timeString}`;
+    }
+
+    // 💾 Enregistre dans Firebase
+    firebase.database().ref("accounts/" + uid + "/timer").set(timeString);
+
+    // 🎁 Gagne 5 VIX toutes les 60 secondes
+    if (vixSeconds % 60 === 0) {
+      addVix(5);
     }
   }, 1000);
 }
+
+// 👁️ Gère la visibilité de l’onglet
+document.addEventListener("visibilitychange", () => {
+  isPageVisible = !document.hidden;
+});
 
 function updateVixTimerDisplay() {
   const minutes = Math.floor(vixSeconds / 60).toString().padStart(2, "0");
@@ -1262,7 +1283,7 @@ firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap =
     if (localPseudo && data.message.includes("@" + localPseudo)) {
       isMentioned = true;
       const regex = new RegExp("@" + localPseudo + "\\b", "g");
-      messageHTML = messageHTML.replace(regex, `<span style="color: white; background-color: #007bff; padding: 2px 4px; border-radius: 3px;">@${localPseudo}</span>`);
+      messageHTML = messageHTML.replace(regex, `<span style="color: white; background-color: #00FF5E; padding: 2px 4px; border-radius: 3px;">@${localPseudo}</span>`);
       const ping = new Audio("ping.mp3");
       ping.play().catch(e => console.warn("Erreur lecture audio:", e));
     }
