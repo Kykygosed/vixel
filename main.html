@@ -1279,10 +1279,9 @@ window.addEventListener("resize", () => {
 function sendMessage() {
   const input = document.getElementById("chatInput");
   const message = input.value.trim();
-
   if (!message) return;
 
-  // 🔴 Gérer /help localement sans envoyer à Firebase
+  // Gestion /help local
   if (message === "/help") {
     const line = document.createElement("div");
     line.innerHTML = `<span style="color: red;">Aucune commande disponible pour l'instant.</span>`;
@@ -1292,7 +1291,42 @@ function sendMessage() {
     return;
   }
 
-  // 🔽 Envoi normal sinon
+  // Gestion /msg
+  if (message.startsWith("/msg ")) {
+    // Ex: /msg Bob Salut ça va ?
+    const parts = message.split(" ");
+    if (parts.length < 3) {
+      alert("Usage: /msg [pseudo] [message]");
+      input.value = "";
+      return;
+    }
+    const target = parts[1];
+    const privateMsg = parts.slice(2).join(" ");
+
+    // Créer un identifiant de conversation unique (ordre alphabétique)
+    const users = [localPseudo, target].sort();
+    const convoId = users.join("_");
+
+    // Pousser message privé
+    firebase.database().ref(`privateMessages/${convoId}`).push({
+      from: localPseudo,
+      to: target,
+      message: privateMsg,
+      timestamp: Date.now()
+    });
+
+    // Afficher dans le chat local
+    const line = document.createElement("div");
+    line.innerHTML = `<em>Message privé à <strong>${target}</strong> : ${privateMsg}</em>`;
+    line.style.color = "gray";
+    chatMessages.appendChild(line);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    input.value = "";
+    return;
+  }
+
+  // Envoi normal
   firebase.database().ref("chat").push({
     pseudo: localPseudo,
     message: message,
@@ -1301,6 +1335,29 @@ function sendMessage() {
 
   input.value = "";
 }
+function listenPrivateMessages(withUser) {
+  const users = [localPseudo, withUser].sort();
+  const convoId = users.join("_");
+
+  firebase.database().ref(`privateMessages/${convoId}`).limitToLast(20).on("child_added", snapshot => {
+    const data = snapshot.val();
+
+    // Afficher uniquement si c'est pour moi ou envoyé par moi
+    if (data.to === localPseudo || data.from === localPseudo) {
+      const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+
+      const line = document.createElement("div");
+      line.innerHTML = `<span style="color: gray;">[${time}] <strong>${data.from}</strong> ➔ <strong>${data.to}</strong> : ${data.message}</span>`;
+      chatMessages.appendChild(line);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  });
+}
+
 
 
 const chatMessages = document.getElementById("chatMessages");
