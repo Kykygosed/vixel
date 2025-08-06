@@ -1293,21 +1293,19 @@ function sendMessage() {
 
   // Gestion /msg
   if (message.startsWith("/msg ")) {
-    // Ex: /msg Bob Salut ça va ?
     const parts = message.split(" ");
     if (parts.length < 3) {
       alert("Usage: /msg [pseudo] [message]");
       input.value = "";
       return;
     }
+
     const target = parts[1];
     const privateMsg = parts.slice(2).join(" ");
 
-    // Créer un identifiant de conversation unique (ordre alphabétique)
     const users = [localPseudo, target].sort();
     const convoId = users.join("_");
 
-    // Pousser message privé
     firebase.database().ref(`privateMessages/${convoId}`).push({
       from: localPseudo,
       to: target,
@@ -1315,7 +1313,6 @@ function sendMessage() {
       timestamp: Date.now()
     });
 
-    // Afficher dans le chat local
     const line = document.createElement("div");
     line.innerHTML = `<em>Message privé à <strong>${target}</strong> : ${privateMsg}</em>`;
     line.style.color = "gray";
@@ -1335,15 +1332,22 @@ function sendMessage() {
 
   input.value = "";
 }
-function listenPrivateMessages(withUser) {
-  const users = [localPseudo, withUser].sort();
-  const convoId = users.join("_");
 
-  firebase.database().ref(`privateMessages/${convoId}`).limitToLast(20).on("child_added", snapshot => {
-    const data = snapshot.val();
+// Écoute les messages privés
+function listenPrivateMessages() {
+  firebase.database().ref("privateMessages").on("child_added", convoSnap => {
+    const convoId = convoSnap.key;
+    if (!convoId.includes(localPseudo)) return;
 
-    // Afficher uniquement si c'est pour moi ou envoyé par moi
-    if (data.to === localPseudo || data.from === localPseudo) {
+    // Empêche les doublons d'écoute
+    if (convoSnap.ref._isListening) return;
+    convoSnap.ref._isListening = true;
+
+    convoSnap.ref.limitToLast(20).on("child_added", msgSnap => {
+      const data = msgSnap.val();
+
+      if (data.to !== localPseudo) return; // 👈 S'assurer que c'est bien pour ce user
+
       const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
         hour: "2-digit",
         minute: "2-digit",
@@ -1351,25 +1355,54 @@ function listenPrivateMessages(withUser) {
       });
 
       const line = document.createElement("div");
-      line.innerHTML = `<span style="color: gray;">[${time}] <strong>${data.from}</strong> ➔ <strong>${data.to}</strong> : ${data.message}</span>`;
+      line.innerHTML = `<span style="color: gray;">[${time}] <strong>${data.from}</strong> vous envoie : ${data.message}</span>`;
       chatMessages.appendChild(line);
       chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
+
+      // Optionnel : petit son pour signaler un message privé
+      const mp3 = new Audio("ping.mp3");
+      mp3.play().catch(() => {});
+    });
   });
 }
 
+// 🔁 Écoute toutes les conversations privées qui me concernent
+function listenAllPrivateMessages() {
+  firebase.database().ref("privateMessages").on("child_added", convoSnap => {
+    const convoId = convoSnap.key;
+    if (!convoId.includes(localPseudo)) return;
 
+    // Éviter doublon d'écoute
+    if (convoSnap.ref._isListening) return;
+    convoSnap.ref._isListening = true;
 
+    convoSnap.ref.limitToLast(20).on("child_added", msgSnap => {
+      const data = msgSnap.val();
+      if (data.to === localPseudo || data.from === localPseudo) {
+        const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit"
+        });
+
+        const line = document.createElement("div");
+        line.innerHTML = `<span style="color: gray;">[${time}] <strong>${data.from}</strong> ➔ <strong>${data.to}</strong> : ${data.message}</span>`;
+        chatMessages.appendChild(line);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    });
+  });
+}
+
+// 🔁 Écoute les messages du chat public
 const chatMessages = document.getElementById("chatMessages");
 const maxMessages = 5;
-
 let localPseudo = null;
 
-// Obtenir le pseudo de l'utilisateur connecté
 firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap => {
   localPseudo = snap.val();
 
-  // Écouter les nouveaux messages du chat
+  // Écoute du chat global
   firebase.database().ref("chat").limitToLast(20).on("child_added", async snapshot => {
     const data = snapshot.val();
     const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
@@ -1382,7 +1415,7 @@ firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap =
     let messageHTML = data.message;
     let isMentioned = false;
 
-    // ✅ Mention détectée
+    // 🔔 Mention détectée
     if (localPseudo && data.message.includes("@" + localPseudo)) {
       isMentioned = true;
       const regex = new RegExp("@" + localPseudo + "\\b", "g");
@@ -1391,7 +1424,7 @@ firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap =
       ping.play().catch(e => console.warn("Erreur lecture audio:", e));
     }
 
-    // ✅ Récupération du rank depuis Firebase
+    // 🔹 Vérifie si ADMIN
     let isAdmin = false;
     try {
       const userSnap = await firebase.database().ref("accounts").orderByChild("pseudo").equalTo(data.pseudo).once("value");
@@ -1404,12 +1437,12 @@ firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap =
       console.error("Erreur lecture rank:", err);
     }
 
-    // ✅ Construction du badge admin
+    // 🔹 Badge ADMIN
     const adminBadge = isAdmin
       ? `<span style="background-color: red; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-left: 6px;">ADMIN</span>`
       : "";
 
-    // ✅ Insertion finale
+    // 🔹 Insertion finale
     line.innerHTML = `<span>[${time}] <strong>${data.pseudo}</strong>${adminBadge} : ${messageHTML}</span>`;
 
     if (isMentioned) {
@@ -1420,14 +1453,18 @@ firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap =
 
     chatMessages.appendChild(line);
 
-    // Supprimer anciens messages
+    // ⛔ Supprimer anciens messages
     while (chatMessages.children.length > maxMessages) {
       chatMessages.removeChild(chatMessages.firstChild);
     }
 
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
+
+  // ✅ On écoute aussi tous les messages privés
+  listenAllPrivateMessages();
 });
+
 
     // Variables globales pour camera et zoom (crée-les si elles n'existent pas déjà)
 let scale = 1;
