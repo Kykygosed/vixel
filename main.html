@@ -539,25 +539,37 @@ firebase.auth().onAuthStateChanged(async user => {
 
 function initializeUserIfFirstTime(uid) {
   const userRef = firebase.database().ref("users/" + uid);
-  const accountRef = firebase.database().ref("accounts/" + uid);
+  const accountPixelsRef = firebase.database().ref("accounts/" + uid + "/pixels");
 
   userRef.once("value").then(snapshot => {
     if (!snapshot.exists()) {
-      // Si les données n'existent pas => première connexion
-      userRef.set({
-        balance: 50 // 50 VIX
-      });
-      accountRef.set({
-        pixels: 50
-      });
-      console.log("Compte initialisé avec 50 VIX et 50 pixels.");
+      // Première connexion, initialise balance à 50
+      userRef.set({ balance: 50 });
+      console.log("Balance initialisée à 50.");
     } else {
-      console.log("Compte déjà initialisé.");
+      console.log("Compte utilisateur déjà initialisé.");
     }
   }).catch(error => {
-    console.error("Erreur lors de l'initialisation du compte :", error);
+    console.error("Erreur lors de l'initialisation du compte utilisateur :", error);
+  });
+
+  // Ajoute 50 pixels sans écraser les autres données dans accounts/UID
+  accountPixelsRef.transaction(currentPixels => {
+    if (currentPixels === null) {
+      return 50; // s'il n'y a rien, on met 50
+    }
+    return currentPixels + 50; // sinon on ajoute 50
+  }, (error, committed, snapshot) => {
+    if (error) {
+      console.error("Erreur transaction pixels:", error);
+    } else if (!committed) {
+      console.log("Transaction pixels annulée");
+    } else {
+      console.log("Pixels mis à jour, nouvelle valeur:", snapshot.val());
+    }
   });
 }
+
 
 
 
