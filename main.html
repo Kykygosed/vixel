@@ -625,11 +625,40 @@ firebase.auth().onAuthStateChanged(async user => {
       }
     });
 
+    // ✅ NOUVEAU : détection des connexions / déconnexions
+    const presenceRef = firebase.database().ref("presence");
+
+    presenceRef.on("child_changed", async snap => {
+      const otherUid = snap.key;
+      const isOnline = snap.val();
+
+      if (otherUid === uid) return; // Ignore soi-même
+
+      const pseudoSnap = await firebase.database().ref("accounts/" + otherUid + "/pseudo").once("value");
+      const otherPseudo = pseudoSnap.val();
+      if (!otherPseudo) return;
+
+      const line = document.createElement("div");
+      const symbol = isOnline ? "+" : "-";
+      const color = isOnline ? "lime" : "red";
+
+      line.innerHTML = `
+        <span style="color: white;">[</span>
+        <span style="color: ${color};">${symbol}</span>
+        <span style="color: white;">]</span>
+        <span style="color: yellow;"> ${otherPseudo}</span>
+      `;
+
+      chatMessages.appendChild(line);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+
   } catch (err) {
     console.error("Erreur dans onAuthStateChanged :", err);
     alert("Erreur lors de la récupération des données.");
   }
 });
+
 
 
 
