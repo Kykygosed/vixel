@@ -299,6 +299,16 @@
     border: none;
     border-radius: 12px;
   }
+  .hotbar-color {
+  width: 32px;
+  height: 32px;
+  margin: 4px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-block;
+}
+
   </style>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
@@ -334,6 +344,11 @@
       <img src="shop.png" alt="Boutique" />
       <span>Boutique</span>
     </div>
+     <div id="customColorSection">
+  <input type="color" id="colorPicker" value="#ff0000">
+  <button onclick="buyCustomColor()">Acheter la couleur (50 VIX)</button>
+</div>
+
 <div class="pixel-container">
   <img src="pixel.png" alt="Pixels" />
   <span id="pixelCount">0 Pixels</span>
@@ -546,6 +561,7 @@ firebase.auth().onAuthStateChanged(async user => {
     listenVix();
     listenPixels();
     initializeUserIfFirstTime(uid);
+    loadCustomColors(); // 🔁 charger les couleurs persos
 
     // ✅ CHRONO — RESTAURATION depuis Firebase
     const timerSnap = await firebase.database().ref("accounts/" + uid + "/timer").once("value");
@@ -1010,6 +1026,72 @@ function buyPixels(pixelsToAdd, vixCost) {
     console.error("Erreur lors de l'achat :", error);
     alert("Une erreur est survenue pendant l'achat.");
   });
+}
+let customColors = {};
+
+async function buyCustomColor(colorCode) {
+  try {
+    const uid = firebase.auth().currentUser.uid;
+    console.log("UID:", uid);
+
+    // Étape 1 : récupérer l'ID lié au compte
+    const linkSnap = await firebase.database().ref("accounts/" + uid + "/link").once("value");
+    const linkedID = linkSnap.val();
+    console.log("Linked ID:", linkedID);
+
+    if (!linkedID) {
+      alert("Aucun ID lié trouvé dans votre compte !");
+      return;
+    }
+
+    // Étape 2 : récupérer le solde (balance) du user lié
+    const balanceSnap = await firebase.database().ref("users/" + linkedID + "/balance").once("value");
+    let currentBalance = balanceSnap.val();
+    console.log("Balance récupérée:", currentBalance);
+
+    currentBalance = Number(currentBalance) || 0;
+
+    if (currentBalance < 50) {
+      alert("Pas assez de VIX pour acheter cette couleur !");
+      return;
+    }
+
+    // Étape 3 : déduire 50 du solde
+    const newBalance = currentBalance - 50;
+    console.log("Nouveau solde:", newBalance);
+    await firebase.database().ref("users/" + linkedID + "/balance").set(newBalance);
+
+    // Étape 4 : enregistrer la couleur dans customcolors
+    const colorKey = colorCode.replace("#", "");
+    console.log("Ajout couleur custom:", colorCode, "avec clé", colorKey);
+    await firebase.database().ref("accounts/" + uid + "/customcolors/" + colorKey).set(colorCode);
+
+    alert(`Couleur ${colorCode} achetée avec succès !`);
+
+    // Étape 5 : mettre à jour la hotbar (exemple, adapte selon ton code)
+    addColorToHotbar(colorCode);
+
+  } catch (error) {
+    console.error("Erreur lors de l'achat de couleur :", error);
+    alert("Une erreur est survenue, merci de réessayer.");
+  }
+}
+
+
+// 🧰 Ajouter dans la hotbar
+function addColorToHotbar(colorID, hex) {
+  const colorDiv = document.createElement("div");
+  colorDiv.classList.add("hotbar-color");
+  colorDiv.style.backgroundColor = hex;
+  colorDiv.title = "Couleur perso : " + hex;
+  colorDiv.dataset.colorId = colorID;
+
+  colorDiv.onclick = () => {
+    alert("Couleur sélectionnée : " + hex);
+    // ici tu peux définir une action à faire quand la couleur est sélectionnée
+  };
+
+  document.getElementById("hotbar").appendChild(colorDiv);
 }
 
 
