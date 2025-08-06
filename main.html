@@ -540,12 +540,13 @@ firebase.auth().onAuthStateChanged(async user => {
 
     if (savedIP && savedIP !== currentIP) {
       alert("Connexion refusée : vous êtes déjà connecté depuis une autre adresse IP.");
-      firebase.auth().signOut();
+      await firebase.auth().signOut();
       return;
     }
 
     await firebase.database().ref("accounts/" + uid + "/connectedIP").set(currentIP);
 
+    // Récupération du pseudo
     const pseudoSnap = await firebase.database().ref("accounts/" + uid + "/pseudo").once("value");
     const pseudo = pseudoSnap.val();
 
@@ -556,16 +557,28 @@ firebase.auth().onAuthStateChanged(async user => {
 
     localPseudo = pseudo;
 
+    // Récupération du rang (admin ou autre)
+    const rankSnap = await firebase.database().ref("accounts/" + uid + "/rank").once("value");
+    const userRank = rankSnap.val() || "user"; // Par défaut "user"
+    const isAdmin = userRank === "admin";
+
+    // Fonction pour savoir si un utilisateur est en ligne via presence/UUID
+    async function isUserOnline(userId) {
+      const presenceSnap = await firebase.database().ref("presence/" + userId).once("value");
+      return presenceSnap.val() === true;
+    }
+
+    // Setup diverses fonctions
     setupPresence();
     listenOnlineCount();
     listenVix();
     listenPixels();
     initializeUserIfFirstTime(uid);
-    loadCustomColors(); // 🔁 charger les couleurs persos
+    loadCustomColors();
 
-    // ✅ CHRONO — RESTAURATION depuis Firebase
+    // Chrono restauration
     const timerSnap = await firebase.database().ref("accounts/" + uid + "/timer").once("value");
-    const savedTimer = timerSnap.val(); // Format "MM:SS"
+    const savedTimer = timerSnap.val();
 
     if (savedTimer) {
       const [min, sec] = savedTimer.split(":").map(n => parseInt(n, 10));
@@ -574,9 +587,9 @@ firebase.auth().onAuthStateChanged(async user => {
       vixSeconds = 0;
     }
 
-    startVixTimer(); // 🕒 Lance le chrono une fois le compte prêt
+    startVixTimer();
 
-    // ✅ CHAT — écoute des messages
+    // Écoute messages chat public
     firebase.database().ref("chat").off("child_added");
     firebase.database().ref("chat").limitToLast(20).on("child_added", async snapshot => {
       const data = snapshot.val();
@@ -598,19 +611,20 @@ firebase.auth().onAuthStateChanged(async user => {
         ping.play().catch(e => console.warn("Erreur lecture audio:", e));
       }
 
-      let isAdmin = false;
+      // Vérification du rang ADMIN du messageur (optionnel, peut être stocké dans message pour optimisation)
+      let isMessageAdmin = false;
       try {
         const userSnap = await firebase.database().ref("accounts").orderByChild("pseudo").equalTo(data.pseudo).once("value");
         userSnap.forEach(child => {
           if (child.val().rank === "admin") {
-            isAdmin = true;
+            isMessageAdmin = true;
           }
         });
       } catch (err) {
-        console.error("Erreur lecture rank:", err);
+        console.error("Erreur lecture rank messageur:", err);
       }
 
-      const adminBadge = isAdmin
+      const adminBadge = isMessageAdmin
         ? `<span style="background-color: red; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-left: 6px;">ADMIN</span>`
         : "";
 
@@ -641,9 +655,8 @@ firebase.auth().onAuthStateChanged(async user => {
       }
     });
 
-    // ✅ NOUVEAU : détection des connexions / déconnexions
+    // Écoute des connexions/déconnexions sur presence
     const presenceRef = firebase.database().ref("presence");
-
     presenceRef.on("child_changed", async snap => {
       const otherUid = snap.key;
       const isOnline = snap.val();
@@ -674,6 +687,7 @@ firebase.auth().onAuthStateChanged(async user => {
     alert("Erreur lors de la récupération des données.");
   }
 });
+
 
 
 
@@ -1387,7 +1401,7 @@ window.addEventListener("resize", () => {
   canvas.height = window.innerHeight;
   drawPixels();
 });
-function sendMessage() {
+async function sendMessage() {
   const input = document.getElementById("chatInput");
   const message = input.value.trim();
   if (!message) return;
@@ -1434,6 +1448,63 @@ function sendMessage() {
     return;
   }
 
+  // Gestion /kick
+  if (message.startsWith("/kick ")) {
+    const parts = message.split(" ");
+    if (parts.length < 3) {
+      alert("Usage: /kick [pseudo] [raison]");
+      input.value = "";
+      return;
+    }
+
+    const targetPseudo = parts[1];
+    const reason = parts.slice(2).join(" ");
+
+    try {
+      // Vérifier que l'utilisateur local est admin
+      const rankSnap = await firebase.database().ref(`accounts/${uid}/rank`).once("value");
+      if (rankSnap.val() !== "admin") {
+        alert("Seuls les administrateurs peuvent utiliser cette commande.");
+        input.value = "";
+        return;
+      }
+
+      // Trouver l'UUID du pseudo ciblé
+      const usersSnap = await firebase.database().ref("accounts").orderByChild("pseudo").equalTo(targetPseudo).once("value");
+      if (!usersSnap.exists()) {
+        alert("Utilisateur introuvable.");
+        input.value = "";
+        return;
+      }
+
+      let targetUid = null;
+      usersSnap.forEach(child => {
+        targetUid = child.key;
+      });
+
+      // Enregistrer le kick dans Firebase
+      await firebase.database().ref(`kicks/${targetUid}`).set({
+        reason: reason,
+        timestamp: Date.now()
+      });
+
+      // Envoyer un message système dans le chat
+      firebase.database().ref("chat").push({
+        pseudo: "SYSTEM",
+        message: `${targetPseudo} a été expulsé : ${reason}`,
+        timestamp: Date.now(),
+        system: true
+      });
+
+      input.value = "";
+    } catch (e) {
+      console.error("Erreur lors du kick :", e);
+      alert("Erreur lors de la commande kick.");
+    }
+
+    return;
+  }
+
   // Envoi normal
   firebase.database().ref("chat").push({
     pseudo: localPseudo,
@@ -1443,6 +1514,7 @@ function sendMessage() {
 
   input.value = "";
 }
+
 
 // Écoute les messages privés
 function listenPrivateMessages() {
