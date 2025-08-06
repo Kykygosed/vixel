@@ -526,6 +526,36 @@ firebase.auth().onAuthStateChanged(async user => {
   uid = user.uid;
   firebase.database().ref("chat").off();
 
+  // Listener kick : dès qu'on détecte un kick on remplace la page
+  firebase.database().ref(kicks/${uid}).on("value", (snapshot) => {
+    const kickData = snapshot.val();
+    if (kickData) {
+      document.body.innerHTML = 
+        <div style="
+          display:flex; 
+          flex-direction:column; 
+          justify-content:center; 
+          align-items:center; 
+          height:100vh; 
+          background:#222; 
+          color:#f33; 
+          font-family: Arial, sans-serif;
+          text-align:center;
+          padding:20px;
+        ">
+          <h1>Vous avez été expulsé(e) par un administrateur</h1>
+          <p style="font-size: 1.2em; margin-top: 10px;">
+            Raison : <strong>${kickData.reason}</strong>
+          </p>
+          <p style="margin-top: 20px; font-weight:bold;">
+            Sanctionné par : ADMIN
+          </p>
+        </div>
+      ;
+      // Ici tu peux aussi couper micro, sons, disable boutons, etc.
+    }
+  });
+
   try {
     // 🔽 Récupération IP
     const getClientIP = async () => {
@@ -606,7 +636,7 @@ firebase.auth().onAuthStateChanged(async user => {
       if (localPseudo && data.message.includes("@" + localPseudo)) {
         isMentioned = true;
         const regex = new RegExp("@" + localPseudo + "\\b", "g");
-        messageHTML = messageHTML.replace(regex, `<span style="color: white; background-color: #007bff; padding: 2px 4px; border-radius: 3px;">@${localPseudo}</span>`);
+        messageHTML = messageHTML.replace(regex, <span style="color: white; background-color: #007bff; padding: 2px 4px; border-radius: 3px;">@${localPseudo}</span>);
         const ping = new Audio("ping.mp3");
         ping.play().catch(e => console.warn("Erreur lecture audio:", e));
       }
@@ -625,10 +655,10 @@ firebase.auth().onAuthStateChanged(async user => {
       }
 
       const adminBadge = isMessageAdmin
-        ? `<span style="background-color: red; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-left: 6px;">ADMIN</span>`
+        ? <span style="background-color: red; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-left: 6px;">ADMIN</span>
         : "";
 
-      line.innerHTML = `<span>[${time}] <strong>${data.pseudo}</strong>${adminBadge} : ${messageHTML}</span>`;
+      line.innerHTML = <span>[${time}] <strong>${data.pseudo}</strong>${adminBadge} : ${messageHTML}</span>;
 
       if (isMentioned) {
         line.style.backgroundColor = "#fff9c4";
@@ -648,7 +678,7 @@ firebase.auth().onAuthStateChanged(async user => {
         chatInitialized = true;
         setTimeout(() => {
           const welcomeLine = document.createElement("div");
-          welcomeLine.innerHTML = `<span style="color: yellow;">Bienvenue sur Vixel! Pour la liste des commandes, faites <strong>/help</strong></span>`;
+          welcomeLine.innerHTML = <span style="color: yellow;">Bienvenue sur Vixel! Pour la liste des commandes, faites <strong>/help</strong></span>;
           chatMessages.appendChild(welcomeLine);
           chatMessages.scrollTop = chatMessages.scrollHeight;
         }, 100);
@@ -671,12 +701,12 @@ firebase.auth().onAuthStateChanged(async user => {
       const symbol = isOnline ? "+" : "-";
       const color = isOnline ? "lime" : "red";
 
-      line.innerHTML = `
+      line.innerHTML = 
         <span style="color: white;">[</span>
         <span style="color: ${color};">${symbol}</span>
         <span style="color: white;">]</span>
         <span style="color: yellow;"> ${otherPseudo}</span>
-      `;
+      ;
 
       chatMessages.appendChild(line);
       chatMessages.scrollTop = chatMessages.scrollHeight;
