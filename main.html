@@ -429,8 +429,22 @@ firebase.database().ref("pixels").on("value", snapshot => {
   drawPixels();
 });
 
+async function getClientIP() {
+  const response = await fetch("https://api.ipify.org?format=json");
+  const data = await response.json();
+  return data.ip;
+}
 
 
+>
+// 🔽 Fonction pour récupérer l'adresse IP publique du client
+async function getClientIP() {
+  const response = await fetch("https://api.ipify.org?format=json");
+  const data = await response.json();
+  return data.ip;
+}
+
+// 🔽 Authentification utilisateur
 firebase.auth().onAuthStateChanged(async user => {
   if (!user) {
     window.location.href = "index.html";
@@ -439,11 +453,26 @@ firebase.auth().onAuthStateChanged(async user => {
 
   uid = user.uid;
 
-  // 🔽 Supprime tout ancien listener pour éviter doublons
+  // 🔽 Récupération de l'IP client
+  const ip = await getClientIP();
+  const ipRef = firebase.database().ref("connectedIPs/" + ip);
+  const snapshot = await ipRef.once("value");
+  const existingUID = snapshot.val();
+
+  if (existingUID && existingUID !== uid) {
+    alert("Cette adresse IP est déjà utilisée sur une autre session.");
+    firebase.auth().signOut();
+    return;
+  }
+
+  // 🔽 Enregistrement de l'IP (effacé à la déconnexion)
+  await ipRef.set(uid);
+  ipRef.onDisconnect().remove();
+
+  // 🔽 Supprime les anciens listeners pour éviter les doublons
   firebase.database().ref("chat").off();
 
   try {
-    // 🔽 Récupérer le pseudo
     const pseudoSnap = await firebase.database().ref("accounts/" + uid + "/pseudo").once("value");
     const pseudo = pseudoSnap.val();
 
@@ -452,17 +481,14 @@ firebase.auth().onAuthStateChanged(async user => {
       return;
     }
 
-    // 🔽 Lancer les fonctions liées à l'utilisateur connecté
     setupPresence();
     listenOnlineCount();
     listenVix();
     listenPixels();
     initializeUserIfFirstTime(uid);
 
-    // 🔽 Stocke le pseudo localement pour le chat
     localPseudo = pseudo;
 
-    // 🔽 Écouter les nouveaux messages du chat
     firebase.database().ref("chat").off("child_added");
     firebase.database().ref("chat").limitToLast(20).on("child_added", async snapshot => {
       const data = snapshot.val();
@@ -476,7 +502,6 @@ firebase.auth().onAuthStateChanged(async user => {
       let messageHTML = data.message;
       let isMentioned = false;
 
-      // Mentions
       if (localPseudo && data.message.includes("@" + localPseudo)) {
         isMentioned = true;
         const regex = new RegExp("@" + localPseudo + "\\b", "g");
@@ -485,7 +510,6 @@ firebase.auth().onAuthStateChanged(async user => {
         ping.play().catch(e => console.warn("Erreur lecture audio:", e));
       }
 
-      // Rank admin ?
       let isAdmin = false;
       try {
         const userSnap = await firebase.database().ref("accounts").orderByChild("pseudo").equalTo(data.pseudo).once("value");
@@ -518,10 +542,8 @@ firebase.auth().onAuthStateChanged(async user => {
 
       chatMessages.scrollTop = chatMessages.scrollHeight;
 
-      // ✅ Message de bienvenue local à l'utilisateur
       if (!chatInitialized) {
         chatInitialized = true;
-
         setTimeout(() => {
           const welcomeLine = document.createElement("div");
           welcomeLine.innerHTML = `<span style="color: yellow;">Bienvenue sur Vixel! Pour la liste des commandes, faites <strong>/help</strong></span>`;
