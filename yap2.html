@@ -1,0 +1,1739 @@
+<!DOCTYPE html> 
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jeu hehe</title>
+<style>
+    body {
+      margin: 0;
+      font-family: 'Press Start 2P', cursive;
+      background: #f0f0f0;
+      cursor: url('cursor.png') 16 16, auto;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #222;
+      padding: 10px 20px;
+      color: white;
+      user-select: none;
+      font-family: 'Press Start 2P', cursive; /* Ajouté explicitement */
+    }
+    .presence {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-family: 'Press Start 2P', cursive; /* forcer ici aussi */
+    }
+    .presence img {
+      width: 24px;
+      height: 24px;
+    }
+    .shop-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      user-select: none;
+      color: white;
+      font-family: 'Press Start 2P', cursive; /* forcer ici aussi */
+    }
+    .shop-btn img {
+      width: 24px;
+      height: 24px;
+    }
+    .vix-container {
+      background: #888888cc;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 12px;
+      font-family: 'Press Start 2P', cursive; /* forcer ici aussi */
+    }
+    .vix-container img {
+      width: 24px;
+      height: 24px;
+    }
+  .pixel-container {
+  background: #888888cc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 12px;
+  font-family: 'Press Start 2P', cursive;
+  margin-left: 10px;
+}
+.pixel-container img {
+  width: 24px;
+  height: 24px;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.popup {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  font-family: 'Press Start 2P', cursive;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.offer {
+  background: #eeeeee;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.offer img {
+  width: 80px;
+  height: auto;
+}
+
+.offer button {
+  margin-top: 10px;
+  font-family: 'Press Start 2P', cursive;
+  background: #222;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+/* Curseur custom */
+
+
+
+/* Hotbar de couleur */
+.color-hotbar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 20, 0.7);
+  padding: 10px 15px;
+  border-radius: 15px;
+  display: flex;
+  gap: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
+}
+
+/* Chaque couleur dans la hotbar */
+.color-slot {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid white;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: transform 0.2s ease, border 0.2s ease;
+}
+
+.color-slot.selected {
+  transform: scale(1.2);
+  border: 3px solid gold;
+  box-shadow: 0 0 10px gold;
+}
+
+/* Couleurs */
+.color-slot.red { background-color: red; }
+.color-slot.yellow { background-color: yellow; }
+.color-slot.blue { background-color: blue; }
+.color-slot.green { background-color: green; }
+.color-slot.purple { background-color: purple; }
+.color-slot.black { background-color: black; }
+
+.chatbox {
+  position: fixed;
+  bottom: 100px;
+  left: 100px;
+  width: 500px;          /* agrandi de 300px à 500px */
+  max-height: 500px;     /* agrandi de 300px à 500px */
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;       /* un peu plus grand pour la lisibilité */
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 0 10px black;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;
+}
+
+.chat-messages {
+  overflow-y: auto;
+  flex-grow: 1;
+  margin-bottom: 8px;
+  max-height: 400px;     /* agrandi de 200px à 400px */
+}
+
+.chat-input {
+  display: flex;
+  gap: 5px;
+}
+
+.chat-input input {
+  flex-grow: 1;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  padding: 4px;
+  border: none;
+  border-radius: 5px;
+}
+
+.chat-input button {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 5px;
+  background: #222;
+  color: white;
+  cursor: pointer;
+}
+.value-change {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-family: 'Press Start 2P', cursive;
+  pointer-events: none;
+  opacity: 1;
+  animation: riseAndFade 1s ease-out forwards;
+  z-index: 9999;
+}
+
+@keyframes riseAndFade {
+  0% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-20px);
+    opacity: 0;
+  }
+}
+@keyframes riseAndFade {
+  0% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-20px);
+    opacity: 0;
+  }
+}
+  #joystick-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 160px;
+    height: 160px;
+    z-index: 9999;
+    display: none;
+  }
+
+  #joystick-base {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(128, 128, 128, 0.2);
+    border-radius: 50%;
+  }
+
+  #joystick-knob {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    top: 40px;
+    left: 40px;
+    touch-action: none;
+  }
+
+  #zoom-controls {
+    position: fixed;
+    bottom: 200px;
+    left: 20px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 9999;
+  }
+
+  .zoom-button {
+    font-size: 36px;
+    padding: 12px 20px;
+    background-color: rgba(0,0,0,0.6);
+    color: white;
+    border: none;
+    border-radius: 12px;
+  }
+  .hotbar-color {
+  width: 32px;
+  height: 32px;
+  margin: 4px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-block;
+}
+
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+</head>
+<body>
+ <div id="loadingScreen">
+  Chargement...
+</div>
+
+<style>
+  #loadingScreen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: black;
+    color: white;
+    font-size: 2em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+</style>
+   <div class="topbar">
+    <div class="presence">
+      <img src="online.png" alt="Online" />
+      <span id="onlineCount">0</span>
+    </div>
+<div id="onlineListTooltip" style="position:absolute; background:#222; color:#fff; padding:5px 10px; border-radius:5px; display:none; max-height:200px; overflow-y:auto; font-size:0.9em; z-index:1000;"></div>
+
+    <div class="shop-btn" onclick="openShop()">
+      <img src="shop.png" alt="Boutique" />
+      <span>Boutique</span>
+    </div>
+     <!--div id="customColorSection">
+  <input type="color" id="colorPicker" value="#ff0000">
+  <button onclick="buyCustomColor()">Acheter la couleur (50 VIX)</button>
+   </div-->
+
+<div class="pixel-container">
+  <img src="pixel.png" alt="Pixels" />
+  <span id="pixelCount">0 Pixels</span>
+</div>
+
+  <div id="vix-timer" style="font-size: 12px; font-family: 'Press Start 2P', cursive;">00:00</div>
+
+    <div class="vix-container">
+      <img src="vix.png" alt="VIX" />
+      <span id="vixCount">0 VIX</span>
+    </div>
+  </div>
+<div class="popup-overlay" id="shopPopup">
+  <div class="popup" id="offersContainer">
+    <!-- Bouton fermer en haut à droite -->
+    <button id="closeShop" title="Fermer la boutique" style="
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      width: 30px;
+      height: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
+    ">X</button>
+
+    <!-- Offres injectées ici -->
+  </div>
+</div>
+
+</div>
+<div class="color-hotbar">
+  <div class="color-slot red" data-color="red"></div>
+  <div class="color-slot yellow" data-color="yellow"></div>
+  <div class="color-slot blue" data-color="blue"></div>
+  <div class="color-slot green" data-color="green"></div>
+  <div class="color-slot black" data-color="black"></div>
+<div class="color-slot white" data-color="white"></div>
+  <div class="color-slot purple" data-color="purple"></div>
+</div>
+
+<canvas id="pixelCanvas" width="1000" height="1000" style="border:1px solid #000; display: block; margin: auto; background: white;"></canvas>
+<div id="cursors-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none;">
+  <!-- Les curseurs des autres utilisateurs seront ajoutés ici -->
+</div>
+
+<div class="chatbox">
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-input">
+    <input type="text" id="chatInput" placeholder="Écris un message..." maxlength="200" />
+    <button onclick="sendMessage()">Envoyer</button>
+  </div>
+</div>
+<div id="pixelInfo" style="
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: none;
+  z-index: 9999;
+  pointer-events: none;
+"></div>
+
+<div id="toolButtons" style="
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  z-index: 9999;
+">
+  <button id="brushButton" title="Mode pinceau" style="
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  ">
+    <img src="brush.png" alt="Brush" style="width: 40px; height: 40px;" />
+  </button>
+  <button id="defaultButton" title="Mode normal" style="
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  ">
+    <img src="default.png" alt="Default" style="width: 40px; height: 40px;" />
+  </button>
+</div>
+<audio id="pingSound" src="ping.mp3" preload="auto"></audio>
+<!-- Joystick Container -->
+<div id="joystick-container">
+  <div id="joystick-base">
+    <div id="joystick-knob"></div>
+  </div>
+</div>
+
+<div id="zoom-controls">
+  <button id="zoom-in" class="zoom-button">+</button>
+  <button id="zoom-out" class="zoom-button">−</button>
+</div>
+</div>
+
+
+
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
+    authDomain: "kychat-45596.firebaseapp.com",
+    databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
+    projectId: "kychat-45596",
+    storageBucket: "kychat-45596.appspot.com",
+    messagingSenderId: "104462848972",
+    appId: "1:104462848972:web:7ac49e63008e9a11150369"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  const onlineCountSpan = document.getElementById("onlineCount");
+  const vixCountSpan = document.getElementById("vixCount");
+  const pixelCountSpan = document.getElementById("pixelCount");
+  const shopPopup = document.getElementById("shopPopup");
+
+  let uid, discordId, presenceRef;
+ let pixelsData = {}; // clé: "x_y", valeur: { color: "...", author: "..." }
+  let chatInitialized = false;
+
+
+// Exemple d'écoute Firebase
+firebase.database().ref("pixels").on("value", snapshot => {
+  pixelsData = snapshot.val() || {};
+  drawPixels();
+});
+
+async function getClientIP() {
+  const response = await fetch("https://api.ipify.org?format=json");
+  const data = await response.json();
+  return data.ip;
+}
+
+
+
+// 🔽 Fonction pour récupérer l'adresse IP publique du client
+async function getClientIP() {
+  const response = await fetch("https://api.ipify.org?format=json");
+  const data = await response.json();
+  return data.ip;
+}
+
+firebase.auth().onAuthStateChanged(async user => {
+  if (!user) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  const uid = user.uid;
+  firebase.database().ref("chat").off();
+
+  try {
+    // Vérifie si l'utilisateur est banni
+    const accountRef = firebase.database().ref("accounts/" + uid);
+    const bannedSnap = await accountRef.child("banned").once("value");
+    const isBanned = bannedSnap.val();
+
+    if (isBanned === true) {
+      const bannedBySnap = await accountRef.child("bannedBy").once("value");
+      const bannedBy = bannedBySnap.val() || "ADMIN";
+      localStorage.setItem("bannedBy", bannedBy); // Passer le nom du modérateur à banned.html
+      window.location.href = "banned.html";
+      return;
+    }
+
+    // 🔽 Récupération IP
+    const getClientIP = async () => {
+      const response = await fetch("https://api.ipify.org?format=json");
+      const data = await response.json();
+      return data.ip;
+    };
+
+    const currentIP = await getClientIP();
+    const ipSnap = await firebase.database().ref("accounts/" + uid + "/connectedIP").once("value");
+    const savedIP = ipSnap.val();
+
+    if (savedIP && savedIP !== currentIP) {
+      alert("Connexion refusée : vous êtes déjà connecté depuis une autre adresse IP.");
+      await firebase.auth().signOut();
+      return;
+    }
+
+    await firebase.database().ref("accounts/" + uid + "/connectedIP").set(currentIP);
+
+    // Récupération du pseudo
+    const pseudoSnap = await firebase.database().ref("accounts/" + uid + "/pseudo").once("value");
+    const pseudo = pseudoSnap.val();
+
+    if (!pseudo) {
+      alert("Aucun pseudo trouvé, merci de le configurer.");
+      return;
+    }
+
+    localPseudo = pseudo;
+
+    // Récupération du rang (admin ou autre)
+    const rankSnap = await firebase.database().ref("accounts/" + uid + "/rank").once("value");
+    const userRank = rankSnap.val() || "user"; // Par défaut "user"
+    const isAdmin = userRank === "admin";
+
+    // Fonction pour savoir si un utilisateur est en ligne via presence/UUID
+    async function isUserOnline(userId) {
+      const presenceSnap = await firebase.database().ref("presence/" + userId).once("value");
+      return presenceSnap.val() === true;
+    }
+
+    // Setup diverses fonctions
+    setupPresence();
+    listenOnlineCount();
+    listenVix();
+    listenPixels();
+    initializeUserIfFirstTime(uid);
+    loadCustomColors();
+
+    // Chrono restauration
+    const timerSnap = await firebase.database().ref("accounts/" + uid + "/timer").once("value");
+    const savedTimer = timerSnap.val();
+
+    if (savedTimer) {
+      const [min, sec] = savedTimer.split(":").map(n => parseInt(n, 10));
+      vixSeconds = min * 60 + sec;
+    } else {
+      vixSeconds = 0;
+    }
+
+    startVixTimer();
+
+    // Écoute messages chat public
+    firebase.database().ref("chat").off("child_added");
+    firebase.database().ref("chat").limitToLast(20).on("child_added", async snapshot => {
+      const data = snapshot.val();
+      const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+
+      const line = document.createElement("div");
+      let messageHTML = data.message;
+      let isMentioned = false;
+
+      if (localPseudo && data.message.includes("@" + localPseudo)) {
+        isMentioned = true;
+        const regex = new RegExp("@" + localPseudo + "\\b", "g");
+        messageHTML = messageHTML.replace(regex, `<span style="color: white; background-color: #007bff; padding: 2px 4px; border-radius: 3px;">@${localPseudo}</span>`);
+        const ping = new Audio("ping.mp3");
+        ping.play().catch(e => console.warn("Erreur lecture audio:", e));
+      }
+
+      // Vérification du rang ADMIN du messageur (optionnel, peut être stocké dans message pour optimisation)
+      let isMessageAdmin = false;
+      try {
+        const userSnap = await firebase.database().ref("accounts").orderByChild("pseudo").equalTo(data.pseudo).once("value");
+        userSnap.forEach(child => {
+          if (child.val().rank === "admin") {
+            isMessageAdmin = true;
+          }
+        });
+      } catch (err) {
+        console.error("Erreur lecture rank messageur:", err);
+      }
+
+      const adminBadge = isMessageAdmin
+        ? `<span style="background-color: red; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-left: 6px;">ADMIN</span>`
+        : "";
+
+      line.innerHTML = `<span>[${time}] <strong>${data.pseudo}</strong>${adminBadge} : ${messageHTML}</span>`;
+
+      if (isMentioned) {
+        line.style.backgroundColor = "#fff9c4";
+        line.style.borderRadius = "4px";
+        line.style.padding = "4px";
+      }
+
+      chatMessages.appendChild(line);
+
+      while (chatMessages.children.length > maxMessages) {
+        chatMessages.removeChild(chatMessages.firstChild);
+      }
+
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      if (!chatInitialized) {
+        chatInitialized = true;
+        setTimeout(() => {
+          const welcomeLine = document.createElement("div");
+          welcomeLine.innerHTML = `<span style="color: yellow;">Bienvenue sur Vixel! Pour la liste des commandes, faites <strong>/help</strong></span>`;
+          chatMessages.appendChild(welcomeLine);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 100);
+      }
+    });
+
+    // Écoute des connexions/déconnexions sur presence
+    const presenceRef = firebase.database().ref("presence");
+    presenceRef.on("child_changed", async snap => {
+      const otherUid = snap.key;
+      const isOnline = snap.val();
+
+      if (otherUid === uid) return; // Ignore soi-même
+
+      const pseudoSnap = await firebase.database().ref("accounts/" + otherUid + "/pseudo").once("value");
+      const otherPseudo = pseudoSnap.val();
+      if (!otherPseudo) return;
+
+      const line = document.createElement("div");
+      const symbol = isOnline ? "+" : "-";
+      const color = isOnline ? "lime" : "red";
+
+      line.innerHTML = `
+        <span style="color: white;">[</span>
+        <span style="color: ${color};">${symbol}</span>
+        <span style="color: white;">]</span>
+        <span style="color: yellow;"> ${otherPseudo}</span>
+      `;
+
+      chatMessages.appendChild(line);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+
+  } catch (err) {
+    console.error("Erreur dans onAuthStateChanged :", err);
+    alert("Erreur lors de la récupération des données.");
+  }
+});
+
+
+
+
+
+function initializeUserIfFirstTime(uid) {
+  const userRef = firebase.database().ref("users/" + uid);
+  const accountPixelsRef = firebase.database().ref("accounts/" + uid + "/pixels");
+
+  userRef.once("value").then(snapshot => {
+    if (!snapshot.exists()) {
+      // Première connexion, initialise balance à 50
+      userRef.set({ balance: 50 });
+      console.log("Balance initialisée à 50.");
+    } else {
+      console.log("Compte utilisateur déjà initialisé.");
+    }
+  }).catch(error => {
+    console.error("Erreur lors de l'initialisation du compte utilisateur :", error);
+  });
+
+  // Ajoute 50 pixels sans écraser les autres données dans accounts/UID
+  accountPixelsRef.transaction(currentPixels => {
+    if (currentPixels === null) {
+      return 50; // s'il n'y a rien, on met 50
+    }
+    return currentPixels + 50; // sinon on ajoute 50
+  }, (error, committed, snapshot) => {
+    if (error) {
+      console.error("Erreur transaction pixels:", error);
+    } else if (!committed) {
+      console.log("Transaction pixels annulée");
+    } else {
+      console.log("Pixels mis à jour, nouvelle valeur:", snapshot.val());
+    }
+  });
+}
+
+
+
+
+  function setupPresence() {
+    presenceRef = firebase.database().ref("presence/" + uid);
+    presenceRef.set(true);
+    window.addEventListener("beforeunload", () => {
+      presenceRef.set(false);
+    });
+    presenceRef.onDisconnect().set(false);
+  }
+
+  function listenOnlineCount() {
+    firebase.database().ref("presence").on("value", snapshot => {
+      const presenceData = snapshot.val() || {};
+      let count = 0;
+      for (const key in presenceData) {
+        if (presenceData[key] === true) count++;
+      }
+      onlineCountSpan.textContent = count;
+    });
+  }
+
+const onlineListTooltip = document.getElementById("onlineListTooltip");
+
+// Positionner le tooltip proche de onlineCountSpan
+function positionTooltip() {
+  const rect = onlineCountSpan.getBoundingClientRect();
+  onlineListTooltip.style.top = (rect.bottom + window.scrollY + 5) + "px";
+  onlineListTooltip.style.left = (rect.left + window.scrollX) + "px";
+}
+
+// Fonction qui récupère la liste des pseudos en ligne
+async function fetchOnlineUsers() {
+  const presenceSnapshot = await firebase.database().ref("presence").once("value");
+  const presenceData = presenceSnapshot.val() || {};
+  const onlineUIDs = Object.entries(presenceData)
+    .filter(([uid, isOnline]) => isOnline === true)
+    .map(([uid]) => uid);
+
+  // Récupérer les pseudos en parallèle
+  const pseudoPromises = onlineUIDs.map(async uid => {
+    const pseudoSnap = await firebase.database().ref("accounts/" + uid + "/pseudo").once("value");
+    return pseudoSnap.val() || "(inconnu)";
+  });
+
+  const pseudos = await Promise.all(pseudoPromises);
+  return pseudos;
+}
+
+onlineCountSpan.addEventListener("mouseenter", async () => {
+  positionTooltip();
+  onlineListTooltip.style.display = "block";
+  onlineListTooltip.textContent = "Chargement...";
+
+  try {
+    const pseudos = await fetchOnlineUsers();
+    if (pseudos.length === 0) {
+      onlineListTooltip.textContent = "Aucun utilisateur en ligne.";
+    } else {
+      // Créer une liste HTML
+      const ul = document.createElement("ul");
+      ul.style.margin = "0";
+      ul.style.paddingLeft = "20px";
+      ul.style.maxHeight = "200px";
+      ul.style.overflowY = "auto";
+
+      pseudos.forEach(pseudo => {
+        const li = document.createElement("li");
+        li.textContent = pseudo;
+        ul.appendChild(li);
+      });
+
+      onlineListTooltip.innerHTML = "";
+      onlineListTooltip.appendChild(ul);
+    }
+  } catch (err) {
+    onlineListTooltip.textContent = "Erreur lors du chargement.";
+    console.error(err);
+  }
+});
+
+onlineCountSpan.addEventListener("mouseleave", () => {
+  onlineListTooltip.style.display = "none";
+});
+
+    
+let lastVixValue = null;
+
+function listenVix() {
+  firebase.database().ref("accounts/" + uid + "/link").once("value").then(linkSnap => {
+    const linkedId = linkSnap.val();
+
+    if (!linkedId) {
+      vixCountSpan.textContent = "0 VIX";
+      console.warn("Aucun ID lié trouvé dans 'link'.");
+      return;
+    }
+
+    firebase.database().ref("users/" + linkedId + "/balance").on("value", snapshot => {
+      const vix = snapshot.val() !== null ? snapshot.val() : 0;
+      vixCountSpan.textContent = vix + " VIX";
+
+      if (lastVixValue !== null) {
+        const diff = vix - lastVixValue;
+        if (diff !== 0) {
+          showValueChange(vixCountSpan, diff, diff > 0 ? "lime" : "red");
+        }
+      }
+
+      lastVixValue = vix;
+    });
+  });
+}
+
+
+
+  let lastPixelValue = null;
+
+function listenPixels() {
+  firebase.database().ref("accounts/" + uid + "/pixels").on("value", snapshot => {
+    const pixels = snapshot.val() !== null ? snapshot.val() : 0;
+    pixelCountSpan.textContent = pixels + " Pixels";
+
+    if (lastPixelValue !== null) {
+      const diff = pixels - lastPixelValue;
+      if (diff !== 0) {
+        showValueChange(pixelCountSpan, diff, diff > 0 ? "lime" : "red");
+      }
+    }
+
+    lastPixelValue = pixels;
+  });
+}
+
+let vixTimerInterval = null;
+let vixSeconds = 0;
+let isPageVisible = true;
+
+function startVixTimer() {
+  setInterval(() => {
+    if (!isPageVisible || !uid) return;
+
+    vixSeconds++;
+
+    // Calcul des minutes et secondes
+    const minutes = Math.floor(vixSeconds / 60);
+    const seconds = vixSeconds % 60;
+
+    const timeString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+    // Affiche dans la page
+    const timerDisplay = document.getElementById("vix-timer");
+    if (timerDisplay) {
+      timerDisplay.textContent = `Temps: ${timeString}`;
+    }
+
+    // 💾 Enregistre dans Firebase
+    firebase.database().ref("accounts/" + uid + "/timer").set(timeString);
+
+    // 🎁 Gagne 5 VIX toutes les 60 secondes
+    if (vixSeconds % 60 === 0) {
+      addVix(5);
+    }
+  }, 1000);
+}
+
+// 👁️ Gère la visibilité de l’onglet
+document.addEventListener("visibilitychange", () => {
+  isPageVisible = !document.hidden;
+});
+
+function updateVixTimerDisplay() {
+  const minutes = Math.floor(vixSeconds / 60).toString().padStart(2, "0");
+  const seconds = (vixSeconds % 60).toString().padStart(2, "0");
+  document.getElementById("vix-timer").textContent = `${minutes}:${seconds}`;
+}
+
+function addVix(amount) {
+  firebase.database().ref("accounts/" + uid + "/link").once("value").then(linkSnap => {
+    const linkedId = linkSnap.val();
+    if (!linkedId) return;
+
+    const balanceRef = firebase.database().ref("users/" + linkedId + "/balance");
+    balanceRef.transaction(current => {
+      return (current || 0) + amount;
+    });
+
+    // Animation +X
+    showValueChange(vixCountSpan, amount, "lime");
+  });
+}
+
+// Pause/reprise du minuteur selon l'état de la page
+document.addEventListener("visibilitychange", () => {
+  isPageVisible = document.visibilityState === "visible";
+});
+
+// Démarrage du minuteur après connexion
+startVixTimer();
+
+
+function openShop() {
+  shopPopup.style.display = "flex";
+  loadOffers();
+}
+
+function closeShop() {
+  shopPopup.style.display = "none";
+}
+
+// Gestion du clic en dehors du popup pour fermer
+const offersContainer = document.getElementById("offersContainer");
+
+// Clic sur le fond (popup) ferme
+shopPopup.addEventListener("click", () => {
+  closeShop();
+});
+
+// Clic dans le contenu n'agit pas (empêche la fermeture)
+offersContainer.addEventListener("click", (e) => {
+  e.stopPropagation();
+});
+
+function loadOffers() {
+  offersContainer.innerHTML = ""; // On vide les anciennes offres
+
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "Fermer";
+  closeBtn.style.marginTop = "20px";
+  closeBtn.onclick = closeShop;
+
+  firebase.database().ref("offers").once("value").then(snapshot => {
+    const offers = snapshot.val();
+
+    if (!offers) {
+      const noOffer = document.createElement("div");
+      noOffer.textContent = "Aucune offre disponible.";
+      noOffer.style.textAlign = "center";
+      offersContainer.appendChild(noOffer);
+      offersContainer.appendChild(closeBtn);
+      return;
+    }
+
+    for (const offerId in offers) {
+      const offer = offers[offerId];
+
+      const offerDiv = document.createElement("div");
+      offerDiv.className = "offer";
+
+      const title = document.createElement("div");
+      title.textContent = `${offer.pixels} PIXELS`;
+
+      const cost = document.createElement("div");
+      cost.textContent = `Coût : ${offer.cost} VIX`;
+
+      const img = document.createElement("img");
+      img.src = offer.image;
+      img.alt = `${offer.pixels} Pixels`;
+
+      const buyBtn = document.createElement("button");
+      buyBtn.textContent = "Acheter";
+      buyBtn.onclick = () => buyPixels(offer.pixels, offer.cost);
+
+      offerDiv.appendChild(title);
+      offerDiv.appendChild(cost);
+      offerDiv.appendChild(img);
+      offerDiv.appendChild(buyBtn);
+
+      offersContainer.appendChild(offerDiv);
+    }
+
+    offersContainer.appendChild(closeBtn);
+  });
+}
+
+function buyPixels(pixelsToAdd, vixCost) {
+  // 1. Récupérer le lien vers l'ID de l'utilisateur (link)
+  firebase.database().ref("accounts/" + uid + "/link").once("value").then(linkSnap => {
+    const linkedId = linkSnap.val();
+
+    if (!linkedId) {
+      alert("Impossible d'acheter : identifiant lié non trouvé.");
+      return;
+    }
+
+    const userVixRef = firebase.database().ref("users/" + linkedId + "/balance");
+    const pixelRef = firebase.database().ref("accounts/" + uid + "/pixels");
+
+    // 2. Lire le solde actuel en VIX
+    userVixRef.once("value").then(vixSnap => {
+      const currentVix = vixSnap.val() || 0;
+
+      // 3. Vérifier si l'utilisateur a assez de VIX
+      if (currentVix < vixCost) {
+        alert("Pas assez de VIX !");
+        return;
+      }
+
+      // 4. Déduire les VIX
+      userVixRef.set(currentVix - vixCost);
+
+      // 5. Ajouter les pixels
+      pixelRef.once("value").then(pixelSnap => {
+        const currentPixels = pixelSnap.val() || 0;
+        pixelRef.set(currentPixels + pixelsToAdd);
+      });
+
+      // 6. Confirmation
+      alert("Achat réussi !");
+    });
+  }).catch(error => {
+    console.error("Erreur lors de l'achat :", error);
+    alert("Une erreur est survenue pendant l'achat.");
+  });
+}
+let customColors = {};
+
+async function buyCustomColor(colorCode) {
+  try {
+    const uid = firebase.auth().currentUser.uid;
+    console.log("UID:", uid);
+
+    // Étape 1 : récupérer l'ID lié au compte
+    const linkSnap = await firebase.database().ref("accounts/" + uid + "/link").once("value");
+    const linkedID = linkSnap.val();
+    console.log("Linked ID:", linkedID);
+
+    if (!linkedID) {
+      alert("Aucun ID lié trouvé dans votre compte !");
+      return;
+    }
+
+    // Étape 2 : récupérer le solde (balance) du user lié
+    const balanceSnap = await firebase.database().ref("users/" + linkedID + "/balance").once("value");
+    let currentBalance = balanceSnap.val();
+    console.log("Balance récupérée:", currentBalance);
+
+    currentBalance = Number(currentBalance) || 0;
+
+    if (currentBalance < 50) {
+      alert("Pas assez de VIX pour acheter cette couleur !");
+      return;
+    }
+
+    // Étape 3 : déduire 50 du solde
+    const newBalance = currentBalance - 50;
+    console.log("Nouveau solde:", newBalance);
+    await firebase.database().ref("users/" + linkedID + "/balance").set(newBalance);
+
+    // Étape 4 : enregistrer la couleur dans customcolors
+    const colorKey = colorCode.replace("#", "");
+    console.log("Ajout couleur custom:", colorCode, "avec clé", colorKey);
+    await firebase.database().ref("accounts/" + uid + "/customcolors/" + colorKey).set(colorCode);
+
+    alert(`Couleur ${colorCode} achetée avec succès !`);
+
+    // Étape 5 : mettre à jour la hotbar (exemple, adapte selon ton code)
+    addColorToHotbar(colorCode);
+
+  } catch (error) {
+    console.error("Erreur lors de l'achat de couleur :", error);
+    alert("Une erreur est survenue, merci de réessayer.");
+  }
+}
+
+
+// 🧰 Ajouter dans la hotbar
+function addColorToHotbar(colorID, hex) {
+  const colorDiv = document.createElement("div");
+  colorDiv.classList.add("hotbar-color");
+  colorDiv.style.backgroundColor = hex;
+  colorDiv.title = "Couleur perso : " + hex;
+  colorDiv.dataset.colorId = colorID;
+
+  colorDiv.onclick = () => {
+    alert("Couleur sélectionnée : " + hex);
+    // ici tu peux définir une action à faire quand la couleur est sélectionnée
+  };
+
+  document.getElementById("hotbar").appendChild(colorDiv);
+}
+
+
+let selectedColor = null;
+
+document.querySelectorAll('.color-slot').forEach(slot => {
+  slot.addEventListener('click', () => {
+    // Enlever la sélection précédente
+    document.querySelectorAll('.color-slot').forEach(s => s.classList.remove('selected'));
+
+    // Ajouter la nouvelle sélection
+    slot.classList.add('selected');
+    selectedColor = slot.dataset.color;
+
+    console.log("🎨 Couleur sélectionnée :", selectedColor);
+  });
+});
+
+const canvas = document.getElementById("pixelCanvas");
+const ctx = canvas.getContext("2d");
+
+const mapSize = 500;
+const virtualPixelSize = 1; // taille logique d’un pixel = 1x1
+let zoom = 10; // affichage initial : chaque pixel fait 10px à l’écran
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let offsetX = canvas.width / 2 - (mapSize * virtualPixelSize * zoom) / 2;
+let offsetY = canvas.height / 2 - (mapSize * virtualPixelSize * zoom) / 2;
+
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+
+const pixels = {}; // Stock local
+
+// Fonction de rendu
+function drawPixels() {
+  // 1. Fond noir partout
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 2. Zone blanche de 500x500 pixels (la carte)
+  // mapSize en pixels logiques * taille d'un pixel virtuel * zoom = taille à l'écran
+  const mapScreenX = offsetX;
+  const mapScreenY = offsetY;
+  const mapScreenSize = mapSize * virtualPixelSize * zoom;
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(mapScreenX, mapScreenY, mapScreenSize, mapScreenSize);
+
+  // 3. Dessin des pixels dans la map uniquement
+  for (let key in pixels) {
+    const [x, y] = key.split(":").map(Number);
+    const color = pixels[key];
+
+    // Exclure les pixels hors limites logiques de la carte
+    if (x < 0 || x >= mapSize || y < 0 || y >= mapSize) continue;
+
+    // Calcul de la position à l'écran en fonction du zoom et offset
+    const screenX = x * virtualPixelSize * zoom + offsetX;
+    const screenY = y * virtualPixelSize * zoom + offsetY;
+
+    // Ignorer les pixels hors du canvas pour optimiser le rendu
+    if (
+      screenX + virtualPixelSize * zoom < 0 || 
+      screenY + virtualPixelSize * zoom < 0 ||
+      screenX > canvas.width || 
+      screenY > canvas.height
+    ) continue;
+
+    ctx.fillStyle = color;
+    ctx.fillRect(screenX, screenY, virtualPixelSize * zoom, virtualPixelSize * zoom);
+  }
+}
+
+const cursorsContainer = document.createElement("div");
+document.body.appendChild(cursorsContainer);
+
+const mouseRef = firebase.database().ref("mouse_positions");
+const remoteCursors = {}; // UID => DOM Element
+
+// 1. Met à jour sa propre position de souris
+document.addEventListener("mousemove", (e) => {
+  if (!uid) return;
+
+  const x = e.clientX;
+  const y = e.clientY;
+
+  // Format "x.y" en deux chiffres après la virgule
+  const cursorStr = `${x.toFixed(2)}.${y.toFixed(2)}`;
+  
+  firebase.database().ref("accounts/" + uid + "/cursor").set(cursorStr);
+
+  // En plus : mettre à jour la position visible (comme avant)
+  mouseRef.child(uid).set({
+    x,
+    y,
+    timestamp: Date.now()
+  });
+});
+function showValueChange(element, amount, color = "lime") {
+  const changeEl = document.createElement("div");
+  changeEl.className = "value-change";
+  changeEl.style.color = color;
+  changeEl.textContent = (amount > 0 ? "+" : "") + amount;
+
+  // Positionner par rapport à l'élément
+  const rect = element.getBoundingClientRect();
+  changeEl.style.top = rect.bottom + "px";
+  changeEl.style.left = rect.left + rect.width / 2 + "px";
+
+  document.body.appendChild(changeEl);
+
+  // Le retirer après l'animation
+  setTimeout(() => {
+    changeEl.remove();
+  }, 1000);
+}
+
+let pixelPlacementEnabled = true; // par défaut : placement activé
+
+const brushBtn = document.getElementById("brushButton");
+const defaultBtn = document.getElementById("defaultButton");
+const hotbar = document.querySelector(".color-hotbar");
+
+brushBtn.addEventListener("click", () => {
+  pixelPlacementEnabled = true;
+  hotbar.style.display = "flex"; // affiche la hotbar
+  console.log("🎨 Mode pinceau activé");
+});
+
+defaultBtn.addEventListener("click", () => {
+  pixelPlacementEnabled = false;
+  hotbar.style.display = "none"; // masque la hotbar
+  selectedColor = null; // déselectionne la couleur
+  document.querySelectorAll('.color-slot').forEach(s => s.classList.remove('selected'));
+  console.log("🧱 Mode normal activé (placement désactivé)");
+});
+
+// Nettoyage à la déconnexion
+// Quand l'utilisateur ferme la page ou recharge
+window.addEventListener("beforeunload", () => {
+  if (!uid) return;
+
+  // Supprimer la présence du curseur visible
+  firebase.database().ref("mouse_positions/" + uid).remove();
+
+  // Supprimer aussi la position "accounts/UID/cursor"
+  firebase.database().ref("accounts/" + uid + "/cursor").remove();
+});
+
+// Gestion de la déconnexion automatique (Firebase)
+firebase.database().ref(".info/connected").on("value", (snap) => {
+  if (snap.val() === false || !uid) return;
+
+  // Supprime la souris à la déconnexion réseau
+  firebase.database().ref("mouse_positions/" + uid).onDisconnect().remove();
+
+  // Supprime aussi la position texte dans accounts/UID/cursor
+  firebase.database().ref("accounts/" + uid + "/cursor").onDisconnect().remove();
+});
+
+// 2. Écoute les mouvements des autres
+mouseRef.on("value", (snapshot) => {
+  const allData = snapshot.val() || {};
+  for (const otherUid in allData) {
+    if (otherUid === uid) continue; // Ne pas afficher son propre curseur
+
+    const data = allData[otherUid];
+    if (!remoteCursors[otherUid]) {
+      const cursorEl = document.createElement("div");
+      cursorEl.className = "remote-cursor";
+
+      const pseudoEl = document.createElement("div");
+      pseudoEl.textContent = "...";
+      cursorEl.appendChild(pseudoEl);
+
+      const imgEl = document.createElement("img");
+      imgEl.src = "cursor.png";
+      cursorEl.appendChild(imgEl);
+
+      cursorsContainer.appendChild(cursorEl);
+      remoteCursors[otherUid] = {
+        el: cursorEl,
+        pseudoEl,
+        imgEl,
+        x: 0,
+        y: 0
+      };
+
+      // Récupère et affiche le pseudo
+      firebase.database().ref("accounts/" + otherUid + "/pseudo").once("value").then(snap => {
+        pseudoEl.textContent = snap.val() || "???";
+      });
+    }
+
+    // Met à jour la position
+    const cursor = remoteCursors[otherUid];
+    cursor.el.style.left = data.x + "px";
+    cursor.el.style.top = data.y + "px";
+  }
+
+  // Supprime les curseurs qui ne sont plus là
+  for (const uidInDOM in remoteCursors) {
+    if (!allData[uidInDOM]) {
+      cursorsContainer.removeChild(remoteCursors[uidInDOM].el);
+      delete remoteCursors[uidInDOM];
+    }
+  }
+});
+
+// Zoom à la molette
+canvas.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const scale = e.deltaY < 0 ? 1.1 : 0.9;
+
+  const mouseX = e.offsetX;
+  const mouseY = e.offsetY;
+
+  offsetX = mouseX - (mouseX - offsetX) * scale;
+  offsetY = mouseY - (mouseY - offsetY) * scale;
+
+  zoom *= scale;
+  drawPixels();
+});
+
+// Drag
+canvas.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+});
+canvas.addEventListener("mouseup", () => isDragging = false);
+canvas.addEventListener("mouseleave", () => isDragging = false);
+canvas.addEventListener("mousemove", (e) => {
+  if (isDragging) {
+    offsetX += e.clientX - dragStartX;
+    offsetY += e.clientY - dragStartY;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    drawPixels();
+  }
+});
+
+// Clic = placer pixel
+canvas.addEventListener("click", (e) => {
+  if (!pixelPlacementEnabled || !selectedColor || !uid) return;
+
+
+  const x = Math.floor((e.offsetX - offsetX) / zoom);
+  const y = Math.floor((e.offsetY - offsetY) / zoom);
+
+  if (x < 0 || x >= mapSize || y < 0 || y >= mapSize) return;
+
+  const key = `${x}:${y}`;
+  const pixelRef = firebase.database().ref("accounts/" + uid + "/pixels");
+
+  pixelRef.once('value').then(snap => {
+    let currentPixels = snap.val() || 0;
+    if (currentPixels <= 0) {
+      alert("Tu n'as plus de pixels !");
+      return;
+    }
+
+    pixelRef.set(currentPixels - 1);
+    firebase.database().ref("pixels/" + key).set({
+      color: selectedColor,
+      placedBy: uid,
+      timestamp: Date.now()
+    });
+  });
+});
+
+// Mise à jour live des pixels
+firebase.database().ref("pixels").on("child_added", snapshot => {
+  const key = snapshot.key;
+  const data = snapshot.val();
+  pixels[key] = data.color;
+  drawPixels();
+});
+firebase.database().ref("pixels").on("child_changed", snapshot => {
+  const key = snapshot.key;
+  const data = snapshot.val();
+  pixels[key] = data.color;
+  drawPixels();
+});
+
+// Resize auto
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  drawPixels();
+});
+async function sendMessage() {
+  const input = document.getElementById("chatInput");
+  const message = input.value.trim();
+  if (!message) return;
+
+  // Gestion /help local
+  if (message === "/help") {
+    const line = document.createElement("div");
+    line.innerHTML = `<span style="color: red;">Aucune commande disponible pour l'instant.</span>`;
+    chatMessages.appendChild(line);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    input.value = "";
+    return;
+  }
+
+  // Gestion /msg
+  if (message.startsWith("/msg ")) {
+    const parts = message.split(" ");
+    if (parts.length < 3) {
+      alert("Usage: /msg [pseudo] [message]");
+      input.value = "";
+      return;
+    }
+
+    const target = parts[1];
+    const privateMsg = parts.slice(2).join(" ");
+
+    const users = [localPseudo, target].sort();
+    const convoId = users.join("_");
+
+    firebase.database().ref(`privateMessages/${convoId}`).push({
+      from: localPseudo,
+      to: target,
+      message: privateMsg,
+      timestamp: Date.now()
+    });
+
+    const line = document.createElement("div");
+    line.innerHTML = `<em>Message privé à <strong>${target}</strong> : ${privateMsg}</em>`;
+    line.style.color = "gray";
+    chatMessages.appendChild(line);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    input.value = "";
+    return;
+  }
+
+  // Gestion /kick
+  if (message.startsWith("/kick ")) {
+    const parts = message.split(" ");
+    if (parts.length < 3) {
+      alert("Usage: /kick [pseudo] [raison]");
+      input.value = "";
+      return;
+    }
+
+    const targetPseudo = parts[1];
+    const reason = parts.slice(2).join(" ");
+
+    try {
+      // Vérifier que l'utilisateur local est admin
+      const rankSnap = await firebase.database().ref(`accounts/${uid}/rank`).once("value");
+      if (rankSnap.val() !== "admin") {
+        alert("Seuls les administrateurs peuvent utiliser cette commande.");
+        input.value = "";
+        return;
+      }
+
+      // Trouver l'UUID du pseudo ciblé
+      const usersSnap = await firebase.database().ref("accounts").orderByChild("pseudo").equalTo(targetPseudo).once("value");
+      if (!usersSnap.exists()) {
+        alert("Utilisateur introuvable.");
+        input.value = "";
+        return;
+      }
+
+      let targetUid = null;
+      usersSnap.forEach(child => {
+        targetUid = child.key;
+      });
+
+      // Enregistrer le kick dans Firebase
+      await firebase.database().ref(`kicks/${targetUid}`).set({
+        reason: reason,
+        timestamp: Date.now()
+      });
+
+      // Envoyer un message système dans le chat
+      firebase.database().ref("chat").push({
+        pseudo: "SYSTEM",
+        message: `${targetPseudo} a été expulsé : ${reason}`,
+        timestamp: Date.now(),
+        system: true
+      });
+
+      input.value = "";
+    } catch (e) {
+      console.error("Erreur lors du kick :", e);
+      alert("Erreur lors de la commande kick.");
+    }
+
+    return;
+  }
+
+  // Envoi normal
+  firebase.database().ref("chat").push({
+    pseudo: localPseudo,
+    message: message,
+    timestamp: Date.now()
+  });
+
+  input.value = "";
+}
+
+
+// Écoute les messages privés
+function listenPrivateMessages() {
+  firebase.database().ref("privateMessages").on("child_added", convoSnap => {
+    const convoId = convoSnap.key;
+    if (!convoId.includes(localPseudo)) return;
+
+    // Empêche les doublons d'écoute
+    if (convoSnap.ref._isListening) return;
+    convoSnap.ref._isListening = true;
+
+    convoSnap.ref.limitToLast(20).on("child_added", msgSnap => {
+      const data = msgSnap.val();
+
+      if (data.to !== localPseudo) return; // 👈 S'assurer que c'est bien pour ce user
+
+      const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+
+      const line = document.createElement("div");
+      line.innerHTML = `<span style="color: gray;">[${time}] <strong>${data.from}</strong> vous envoie : ${data.message}</span>`;
+      chatMessages.appendChild(line);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      // Optionnel : petit son pour signaler un message privé
+      const mp3 = new Audio("ping.mp3");
+      mp3.play().catch(() => {});
+    });
+  });
+}
+
+// 🔁 Écoute toutes les conversations privées qui me concernent
+function listenAllPrivateMessages() {
+  firebase.database().ref("privateMessages").on("child_added", convoSnap => {
+    const convoId = convoSnap.key;
+    if (!convoId.includes(localPseudo)) return;
+
+    // Éviter doublon d'écoute
+    if (convoSnap.ref._isListening) return;
+    convoSnap.ref._isListening = true;
+
+    convoSnap.ref.limitToLast(20).on("child_added", msgSnap => {
+      const data = msgSnap.val();
+      if (data.to === localPseudo || data.from === localPseudo) {
+        const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit"
+        });
+
+        const line = document.createElement("div");
+        line.innerHTML = `<span style="color: gray;">[${time}] <strong>${data.from}</strong> ➔ <strong>${data.to}</strong> : ${data.message}</span>`;
+        chatMessages.appendChild(line);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    });
+  });
+}
+
+// 🔁 Écoute les messages du chat public
+const chatMessages = document.getElementById("chatMessages");
+const maxMessages = 5;
+let localPseudo = null;
+
+firebase.database().ref("accounts/" + uid + "/pseudo").once("value").then(snap => {
+  localPseudo = snap.val();
+
+  // Écoute du chat global
+  firebase.database().ref("chat").limitToLast(20).on("child_added", async snapshot => {
+    const data = snapshot.val();
+    const time = new Date(data.timestamp).toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+
+    const line = document.createElement("div");
+    let messageHTML = data.message;
+    let isMentioned = false;
+
+    // 🔔 Mention détectée
+    if (localPseudo && data.message.includes("@" + localPseudo)) {
+      isMentioned = true;
+      const regex = new RegExp("@" + localPseudo + "\\b", "g");
+      messageHTML = messageHTML.replace(regex, `<span style="color: white; background-color: #00FF5E; padding: 2px 4px; border-radius: 3px;">@${localPseudo}</span>`);
+      const ping = new Audio("ping.mp3");
+      ping.play().catch(e => console.warn("Erreur lecture audio:", e));
+    }
+
+    // 🔹 Vérifie si ADMIN
+    let isAdmin = false;
+    try {
+      const userSnap = await firebase.database().ref("accounts").orderByChild("pseudo").equalTo(data.pseudo).once("value");
+      userSnap.forEach(child => {
+        if (child.val().rank === "admin") {
+          isAdmin = true;
+        }
+      });
+    } catch (err) {
+      console.error("Erreur lecture rank:", err);
+    }
+
+    // 🔹 Badge ADMIN
+    const adminBadge = isAdmin
+      ? `<span style="background-color: red; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-left: 6px;">ADMIN</span>`
+      : "";
+
+    // 🔹 Insertion finale
+    line.innerHTML = `<span>[${time}] <strong>${data.pseudo}</strong>${adminBadge} : ${messageHTML}</span>`;
+
+    if (isMentioned) {
+      line.style.backgroundColor = "#fff9c4";
+      line.style.borderRadius = "4px";
+      line.style.padding = "4px";
+    }
+
+    chatMessages.appendChild(line);
+
+    // ⛔ Supprimer anciens messages
+    while (chatMessages.children.length > maxMessages) {
+      chatMessages.removeChild(chatMessages.firstChild);
+    }
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
+
+  // ✅ On écoute aussi tous les messages privés
+  listenAllPrivateMessages();
+});
+
+
+    // Variables globales pour camera et zoom (crée-les si elles n'existent pas déjà)
+let scale = 1;
+let cameraX = 0;
+let cameraY = 0;
+
+// Fonction détecte mobile et active joystick + zoom
+
+// Éviter le scroll mobile par défaut
+document.body.addEventListener("touchmove", e => {
+  if (e.target === canvas) e.preventDefault();
+}, { passive: false });
+
+if (/iPhone|iPad|Android|Mobile|iPod/i.test(navigator.userAgent)) {
+  canvas.addEventListener("touchstart", e => {
+    if (e.touches.length === 1) {
+      isPanning = true;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    } else if (e.touches.length === 2) {
+      isPanning = false;
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastTouchDistance = Math.hypot(dx, dy);
+    }
+  });
+
+  canvas.addEventListener("touchmove", e => {
+    if (e.touches.length === 1 && isPanning) {
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+
+      cameraX -= dx / scale;
+      cameraY -= dy / scale;
+
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const currentDistance = Math.hypot(dx, dy);
+
+      const zoomFactor = currentDistance / lastTouchDistance;
+      scale *= zoomFactor;
+      scale = Math.max(0.5, Math.min(3, scale)); // clamp zoom
+
+      lastTouchDistance = currentDistance;
+    }
+  });
+
+  canvas.addEventListener("touchend", e => {
+    if (e.touches.length < 2) {
+      lastTouchDistance = 0;
+    }
+    if (e.touches.length === 0) {
+      isPanning = false;
+    }
+  });
+}
+
+
+  window.addEventListener('load', () => {
+    // Au moment du chargement complet
+    setTimeout(() => {
+      // Après 5 secondes, on masque le loading screen
+      const loadingScreen = document.getElementById('loadingScreen');
+      if (loadingScreen) {
+        loadingScreen.style.display = 'none';
+      }
+    }, 5000); // 5000 ms = 5 secondes
+  });
+
+
+  </script>
+</body>
+</html>
