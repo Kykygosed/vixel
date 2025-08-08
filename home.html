@@ -3,450 +3,592 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>KykyChat</title>
+  <title>Chat & Amis</title>
   <style>
- * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+    /* === CSS complet === */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-body {
-  font-family: 'Poppins', sans-serif;
-  background: #f4f4f4;
-  padding-bottom: 80px; /* espace pour la bottom bar */
-}
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f4f4f4;
+      padding-bottom: 80px; /* espace bottom bar */
+    }
 
-/* Bottom bar */
-.bottom-bar {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  height: 70px;
-  background: #ffffff;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  border-top: 1px solid #ddd;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-  z-index: 999;
-}
+    /* Bottom bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      height: 70px;
+      background: #ffffff;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid #ddd;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      z-index: 999;
+    }
 
-.bar-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: #555;
-}
+    .bar-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #555;
+      user-select: none;
+    }
 
-.bar-item.active {
-  color: #007BFF;
-}
+    .bar-item.active {
+      color: #007BFF;
+    }
 
-.bar-item img {
-  width: 24px;
-  height: 24px;
-  margin-bottom: 4px;
-  transition: transform 0.3s;
-}
+    .bar-item img {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 4px;
+      transition: transform 0.3s;
+    }
 
-.bar-item.active img {
-  transform: scale(1.2);
-}
+    .bar-item.active img {
+      transform: scale(1.2);
+    }
 
-.bar-item span {
-  font-size: 12px;
-}
+    .bar-item span {
+      font-size: 12px;
+    }
 
-/* Popup styles */
-.popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
+    /* === Popup styles === */
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
 
-.popup {
-  background: white;
-  padding: 20px 30px;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.2);
-  max-width: 320px;
-  width: 100%;
-  text-align: center;
-}
+    .popup {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      max-width: 320px;
+      width: 100%;
+      text-align: center;
+    }
 
-.popup input[type="text"] {
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 16px;
-  border: 1.5px solid #ccc;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  transition: border-color 0.3s ease;
-}
+    .popup input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 16px;
+      border: 1.5px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      transition: border-color 0.3s ease;
+    }
 
-.popup input[type="text"]:focus {
-  border-color: #007BFF;
-  outline: none;
-}
+    .popup input[type="text"]:focus {
+      border-color: #007BFF;
+      outline: none;
+    }
 
-.popup button {
-  background-color: #007BFF;
-  border: none;
-  padding: 12px 20px;
-  color: white;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  width: 100%;
-}
+    .popup button {
+      background-color: #007BFF;
+      border: none;
+      padding: 12px 20px;
+      color: white;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: 100%;
+      user-select: none;
+    }
 
-.popup button:hover {
-  background-color: #0056b3;
-}
+    .popup button:hover {
+      background-color: #0056b3;
+    }
 
-/* Friend list and friend card */
-.friends-container {
-  margin-top: 20px;
-}
+    /* Container amis + demandes */
+    .friends-container {
+      margin: 15px 20px 90px 20px;
+    }
 
-.tab-content {
-  margin-top: 15px;
-  max-height: 300px;
-  overflow-y: auto;
-}
+    .tab-content {
+      margin-top: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
 
-/* Style pour chaque ami ou demande */
-.friend {
-  position: relative; /* important pour positionner le point statut */
-  background: white;
-  border-radius: 10px;
-  padding: 12px 10px 15px 10px;
-  margin-bottom: 10px;
-  box-shadow: 0 0 8px rgba(0,0,0,0.1);
-  width: 150px;
-  text-align: center;
-  display: inline-block;
-  vertical-align: top;
-  font-size: 14px;
-  user-select: none;
-}
+    /* Style pour chaque ami ou demande */
+    .friend {
+      position: relative; /* pour le point statut */
+      background: white;
+      border-radius: 10px;
+      padding: 12px 10px 15px 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      width: 150px;
+      text-align: center;
+      font-size: 14px;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-.friend img.profile-pic {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 8px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
+    .friend img.profile-pic {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 8px;
+      display: block;
+    }
 
-/* Statut en bas à droite de la photo */
-.status-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background-color: gray; /* hors ligne par défaut */
-  border: 2px solid white;
-  box-sizing: content-box;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
+    /* Statut en bas à droite de la photo */
+    .status-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      background-color: gray; /* hors ligne par défaut */
+      border: 2px solid white;
+      box-sizing: content-box;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
 
-.status-dot.online {
-  background-color: #3ac92d; /* vert */
-  background-image: none; /* enlève l'image si présente */
-}
+    .status-dot.online {
+      background-color: #3ac92d; /* vert */
+      background-image: none; /* enleve image si présente */
+    }
 
-/* Texte pseudo et ID */
-.friend .pseudo {
-  font-weight: 600;
-  color: #111;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+    /* Texte pseudo et ID */
+    .friend .pseudo {
+      font-weight: 600;
+      color: #111;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
 
-.friend .id {
-  color: #777;
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  user-select: text;
-}
+    .friend .id {
+      color: #777;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
+      width: 100%;
+    }
 
-/* Boutons dans la liste */
-.friend button {
-  margin-top: 8px;
-  padding: 6px 12px;
-  font-size: 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
+    /* Boutons dans la liste */
+    .friend button {
+      margin-top: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
 
-.friend button.cancel {
-  background-color: #dc3545;
-  color: white;
-}
+    .friend button.cancel {
+      background-color: #dc3545;
+      color: white;
+      width: 100%;
+    }
 
-.friend button.cancel:hover {
-  background-color: #b02a37;
-}
+    .friend button.cancel:hover {
+      background-color: #b02a37;
+    }
 
-.friend button.accept {
-  background-color: #28a745;
-  color: white;
-  margin-right: 6px;
-}
+    .friend button.accept {
+      background-color: #28a745;
+      color: white;
+      margin-right: 6px;
+      flex: 1;
+    }
 
-.friend button.accept:hover {
-  background-color: #1e7e34;
-}
+    .friend button.accept:hover {
+      background-color: #1e7e34;
+    }
 
-.friend button.reject {
-  background-color: #ffc107;
-  color: black;
-}
+    .friend button.reject {
+      background-color: #ffc107;
+      color: black;
+      flex: 1;
+    }
 
-.friend button.reject:hover {
-  background-color: #e0a800;
-}
+    .friend button.reject:hover {
+      background-color: #e0a800;
+    }
 
-/* Scroll barre pour la liste d’amis/demandes */
-.tab-content::-webkit-scrollbar {
-  width: 6px;
-}
+    /* Scroll barre */
+    .tab-content::-webkit-scrollbar {
+      width: 6px;
+    }
 
-.tab-content::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.1);
-  border-radius: 3px;
-}
+    .tab-content::-webkit-scrollbar-thumb {
+      background-color: rgba(0,0,0,0.1);
+      border-radius: 3px;
+    }
 
-.tab-content::-webkit-scrollbar-track {
-  background-color: transparent;
-}
+    .tab-content::-webkit-scrollbar-track {
+      background-color: transparent;
+    }
+
+    /* Bouton + Ajouter */
+    #add-friend-btn {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      margin: 15px 20px 0 20px;
+      font-size: 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+      display: inline-block;
+    }
+
+    #add-friend-btn:hover {
+      background-color: #0056b3;
+    }
 
   </style>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
+
 <body>
-
-  <button id="addFriendBtn">+ Ajouter</button>
-  <div id="overlay"></div>
-  <div id="popup">
-    <h3>Ajouter un ami</h3>
-    <input type="text" id="friendIdInput" placeholder="Entrez l'ID de l'utilisateur" />
-    <button id="sendRequestBtn">Envoyer !</button>
-  </div>
-
-  <div class="section-title">En attente</div>
-  <div id="pendingList"></div>
-
-  <div class="section-title">Amis</div>
-  <div id="friendsList"></div>
-
+  <!-- Bottom Navigation Bar -->
   <div class="bottom-bar">
     <div class="bar-item active" id="chat-tab">
-      <img src="chat.png" />
+      <img src="chat.png" alt="Chat" />
       <span>Chat</span>
     </div>
+
     <div class="bar-item" id="servers-tab">
-      <img src="servers.png" />
+      <img src="servers.png" alt="Serveurs" />
       <span>Serveurs</span>
     </div>
     <div class="bar-item" id="settings-tab">
-      <img src="settings.png" />
+      <img src="settings.png" alt="Paramètres" />
       <span>Paramètres</span>
     </div>
     <div class="bar-item" id="you-tab">
-      <img src="you.png" />
+      <img src="you.png" alt="Vous" />
       <span>Vous</span>
     </div>
   </div>
 
+  <!-- Contenu Chat (visible seulement si chat actif) -->
+  <div id="chat-content" class="friends-container">
+    <button id="add-friend-btn">+ Ajouter un ami</button>
+
+    <h2>Demandes en attente</h2>
+    <div id="pending-friends" class="tab-content"></div>
+
+    <h2>Mes Amis</h2>
+    <div id="friends-list" class="tab-content"></div>
+  </div>
+
+  <!-- Popup Ajout ami -->
+  <div id="add-friend-popup" class="popup-overlay" style="display:none;">
+    <div class="popup">
+      <h3>Ajouter un ami</h3>
+      <input type="text" id="friend-id-input" placeholder="ID de l'ami" />
+      <button id="send-friend-request-btn">Envoyer la demande</button>
+    </div>
+  </div>
+
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDyWu4TI4PIRXfeb7yqt0WIGClgu10IjkM",
-      authDomain: "kylita-f2923.firebaseapp.com",
-      databaseURL: "https://kylita-f2923-default-rtdb.firebaseio.com",
-      projectId: "kylita-f2923",
-      storageBucket: "kylita-f2923.appspot.com",
-      messagingSenderId: "431823530994",
-      appId: "1:431823530994:web:88a07e633751686e5ad96b"
-    };
+    // === CONFIG FIREBASE ===
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDyWu4TI4PIRXfeb7yqt0WIGClgu10IjkM",
+  authDomain: "kylita-f2923.firebaseapp.com",
+  databaseURL: "https://kylita-f2923-default-rtdb.firebaseio.com",
+  projectId: "kylita-f2923",
+  storageBucket: "kylita-f2923.firebasestorage.app",
+  messagingSenderId: "431823530994",
+  appId: "1:431823530994:web:88a07e633751686e5ad96b",
+  measurementId: "G-F4LLNWQJ16"
+};
     firebase.initializeApp(firebaseConfig);
 
-    let currentUser;
+    const auth = firebase.auth();
+    const db = firebase.database();
 
-    firebase.auth().onAuthStateChanged(user => {
-      if (!user) return window.location.href = "login.html";
-      currentUser = user;
-      const uid = user.uid;
-      firebase.database().ref("presence/" + uid).set(true);
-      window.addEventListener("beforeunload", () => {
-        firebase.database().ref("presence/" + uid).set(false);
-      });
+    // === SIMPLIFIE POUR EXEMPLE ===
+    // Supposons que l'utilisateur est connecté et on a son uid et pseudo
+    // En vrai, récupère via auth ou autre moyen
+    const currentUserId = "user123"; // Exemple d'ID connecté
+    const currentUserPseudo = "Kykygosed"; // Pseudo de l'utilisateur
 
-      loadFriendSystem(uid);
-    });
+    // === Présence Firebase (true si page visible, false sinon) ===
+    function setPresence(online) {
+      db.ref(`presence/${currentUserId}`).set(online);
+    }
+    window.addEventListener("focus", () => setPresence(true));
+    window.addEventListener("blur", () => setPresence(false));
+    window.addEventListener("beforeunload", () => setPresence(false));
+    // Initial
+    setPresence(true);
 
+    // === Gestion Onglets Bottom Bar ===
     const chatTab = document.getElementById("chat-tab");
-    const addBtn = document.getElementById("addFriendBtn");
-    const popup = document.getElementById("popup");
-    const overlay = document.getElementById("overlay");
-    const sendBtn = document.getElementById("sendRequestBtn");
-    const input = document.getElementById("friendIdInput");
+    const serversTab = document.getElementById("servers-tab");
+    const settingsTab = document.getElementById("settings-tab");
+    const youTab = document.getElementById("you-tab");
+
+    const chatContent = document.getElementById("chat-content");
+
+    function clearActive() {
+      [chatTab, serversTab, settingsTab, youTab].forEach(el => el.classList.remove("active"));
+      chatContent.style.display = "none";
+    }
 
     chatTab.addEventListener("click", () => {
-      document.querySelectorAll(".bar-item").forEach(t => t.classList.remove("active"));
+      clearActive();
       chatTab.classList.add("active");
-      addBtn.style.display = "block";
+      chatContent.style.display = "block";
     });
 
-    addBtn.addEventListener("click", () => {
-      popup.style.display = "block";
-      overlay.style.display = "block";
+    serversTab.addEventListener("click", () => {
+      clearActive();
+      serversTab.classList.add("active");
+      alert("Onglet Serveurs non implémenté");
     });
 
-    overlay.addEventListener("click", () => {
-      popup.style.display = "none";
-      overlay.style.display = "none";
+    settingsTab.addEventListener("click", () => {
+      clearActive();
+      settingsTab.classList.add("active");
+      alert("Onglet Paramètres non implémenté");
     });
 
-    sendBtn.addEventListener("click", () => {
-      const targetID = input.value.trim();
-      if (!targetID) return;
-
-      firebase.database().ref("accounts").once("value", snap => {
-        let targetUUID = null;
-        snap.forEach(child => {
-          if (child.val().ID === targetID) {
-            targetUUID = child.key;
-          }
-        });
-        if (targetUUID) {
-          firebase.database().ref("friendRequests/" + currentUser.uid + "/sent/" + targetUUID).set(true);
-          firebase.database().ref("friendRequests/" + targetUUID + "/received/" + currentUser.uid).set(true);
-        }
-      });
-
-      input.value = "";
-      popup.style.display = "none";
-      overlay.style.display = "none";
+    youTab.addEventListener("click", () => {
+      clearActive();
+      youTab.classList.add("active");
+      alert("Onglet Vous non implémenté");
     });
 
-    function loadFriendSystem(uid) {
-      const pendingList = document.getElementById("pendingList");
-      const friendsList = document.getElementById("friendsList");
+    // === Popup ajout ami ===
+    const addFriendBtn = document.getElementById("add-friend-btn");
+    const addFriendPopup = document.getElementById("add-friend-popup");
+    const friendIdInput = document.getElementById("friend-id-input");
+    const sendFriendRequestBtn = document.getElementById("send-friend-request-btn");
 
-      function renderUserCard(userId, isRequest, isSender) {
-        firebase.database().ref("accounts/" + userId).once("value", snap => {
-          const data = snap.val();
-          const card = document.createElement("div");
-          card.className = "friend-card";
-          const info = document.createElement("div");
-          info.className = "friend-info";
+    addFriendBtn.addEventListener("click", () => {
+      friendIdInput.value = "";
+      addFriendPopup.style.display = "flex";
+      friendIdInput.focus();
+    });
 
-          const img = document.createElement("img");
-          img.src = data.pdp || "default.png";
+    // Clic en dehors popup ferme
+    addFriendPopup.addEventListener("click", e => {
+      if (e.target === addFriendPopup) {
+        addFriendPopup.style.display = "none";
+      }
+    });
 
-          const status = document.createElement("div");
-          status.className = "status-dot";
-
-          firebase.database().ref("presence/" + userId).on("value", pres => {
-            const online = pres.val();
-            firebase.database().ref("accounts/" + userId + "/npd").once("value", npdSnap => {
-              if (!online) status.className = "status-dot offline";
-              else if (npdSnap.val()) status.className = "status-dot npd";
-              else status.className = "status-dot online";
-            });
-          });
-
-          const txt = document.createElement("div");
-          txt.innerHTML = `<strong>${data.pseudo}</strong><br><small>${data.ID}</small>`;
-
-          img.appendChild(status);
-          info.appendChild(img);
-          info.appendChild(txt);
-          card.appendChild(info);
-
-          const actions = document.createElement("div");
-          actions.className = "friend-actions";
-
-          if (isRequest) {
-            if (isSender) {
-              const cancel = document.createElement("button");
-              cancel.textContent = "Annuler";
-              cancel.onclick = () => {
-                firebase.database().ref("friendRequests/" + uid + "/sent/" + userId).remove();
-                firebase.database().ref("friendRequests/" + userId + "/received/" + uid).remove();
-                card.remove();
-              };
-              actions.appendChild(cancel);
-            } else {
-              const accept = document.createElement("button");
-              accept.textContent = "Accepter";
-              accept.onclick = () => {
-                firebase.database().ref("friends/" + uid + "/" + userId).set(true);
-                firebase.database().ref("friends/" + userId + "/" + uid).set(true);
-                firebase.database().ref("friendRequests/" + uid + "/received/" + userId).remove();
-                firebase.database().ref("friendRequests/" + userId + "/sent/" + uid).remove();
-                card.remove();
-              };
-              const refuse = document.createElement("button");
-              refuse.textContent = "Refuser";
-              refuse.onclick = () => {
-                firebase.database().ref("friendRequests/" + uid + "/received/" + userId).remove();
-                firebase.database().ref("friendRequests/" + userId + "/sent/" + uid).remove();
-                card.remove();
-              };
-              actions.appendChild(accept);
-              actions.appendChild(refuse);
-            }
-            card.appendChild(actions);
-            pendingList.appendChild(card);
-          } else {
-            friendsList.appendChild(card);
-          }
-        });
+    // Envoi demande d'ami
+    sendFriendRequestBtn.addEventListener("click", () => {
+      const friendId = friendIdInput.value.trim();
+      if (!friendId || friendId === currentUserId) {
+        alert("ID invalide");
+        return;
       }
 
-      firebase.database().ref("friendRequests/" + uid + "/sent").on("child_added", snap => {
-        renderUserCard(snap.key, true, true);
+      // Stocke demande d'ami en base : currentUserId -> friendId
+      // On ajoute dans "friendRequests" sous friendId un objet
+      const reqRef = db.ref(`friendRequests/${friendId}/${currentUserId}`);
+      reqRef.set({
+        from: currentUserId,
+        pseudo: currentUserPseudo,
+        timestamp: Date.now()
+      }).then(() => {
+        alert("Demande envoyée !");
+        addFriendPopup.style.display = "none";
+      }).catch(e => {
+        alert("Erreur envoi demande : " + e.message);
+      });
+    });
+
+    // === Affichage demandes en attente ===
+    const pendingFriendsDiv = document.getElementById("pending-friends");
+
+    function createPendingFriendElement(friendId, data) {
+      const div = document.createElement("div");
+      div.classList.add("friend");
+
+      // Photo profil - on va chercher URL ou fallback you.png
+      const img = document.createElement("img");
+      img.classList.add("profile-pic");
+      // Photo user friendId dans db -> stocker dans "users/{friendId}/photoURL"
+      db.ref(`users/${friendId}/photoURL`).once("value").then(snapshot => {
+        const url = snapshot.val();
+        img.src = url || "you.png";
+      }).catch(() => {
+        img.src = "you.png";
       });
 
-      firebase.database().ref("friendRequests/" + uid + "/received").on("child_added", snap => {
-        renderUserCard(snap.key, true, false);
-      });
+      div.appendChild(img);
 
-      firebase.database().ref("friends/" + uid).on("child_added", snap => {
-        renderUserCard(snap.key, false, false);
+      const pseudoEl = document.createElement("div");
+      pseudoEl.classList.add("pseudo");
+      pseudoEl.textContent = data.pseudo || friendId;
+      div.appendChild(pseudoEl);
+
+      const idEl = document.createElement("div");
+      idEl.classList.add("id");
+      idEl.textContent = friendId;
+      div.appendChild(idEl);
+
+      // Boutons annuler, accepter, refuser
+      const buttonsDiv = document.createElement("div");
+      buttonsDiv.style.display = "flex";
+      buttonsDiv.style.marginTop = "8px";
+
+      const acceptBtn = document.createElement("button");
+      acceptBtn.textContent = "Accepter";
+      acceptBtn.classList.add("accept");
+      acceptBtn.onclick = () => {
+        // Ajout mutuel dans amis
+        db.ref(`friends/${currentUserId}/${friendId}`).set({
+          pseudo: data.pseudo,
+          timestamp: Date.now()
+        });
+        db.ref(`friends/${friendId}/${currentUserId}`).set({
+          pseudo: currentUserPseudo,
+          timestamp: Date.now()
+        });
+        // Supprimer demande
+        db.ref(`friendRequests/${currentUserId}/${friendId}`).remove();
+      };
+
+      const rejectBtn = document.createElement("button");
+      rejectBtn.textContent = "Refuser";
+      rejectBtn.classList.add("reject");
+      rejectBtn.onclick = () => {
+        db.ref(`friendRequests/${currentUserId}/${friendId}`).remove();
+      };
+
+      buttonsDiv.appendChild(acceptBtn);
+      buttonsDiv.appendChild(rejectBtn);
+      div.appendChild(buttonsDiv);
+
+      return div;
+    }
+
+    // === Affichage amis ===
+    const friendsListDiv = document.getElementById("friends-list");
+
+    function createFriendElement(friendId, data) {
+      const div = document.createElement("div");
+      div.classList.add("friend");
+
+      const img = document.createElement("img");
+      img.classList.add("profile-pic");
+
+      // Récupère photo profil user friendId, fallback you.png
+      db.ref(`users/${friendId}/photoURL`).once("value").then(snapshot => {
+        const url = snapshot.val();
+        img.src = url || "you.png";
+      }).catch(() => {
+        img.src = "you.png";
+      });
+      div.appendChild(img);
+
+      // Status dot (online / npd / offline)
+      const statusDot = document.createElement("div");
+      statusDot.classList.add("status-dot");
+
+      // On écoute la présence du friendId
+      db.ref(`presence/${friendId}`).on("value", snap => {
+        const val = snap.val();
+        if (val === true) {
+          statusDot.classList.add("online");
+          statusDot.style.backgroundImage = "";
+        } else if (val === "npd") {
+          // Status "npd" (non prété à discuter)
+          statusDot.classList.remove("online");
+          statusDot.style.backgroundImage = "url('npd.png')";
+          statusDot.style.backgroundColor = "transparent";
+        } else {
+          // Hors ligne
+          statusDot.classList.remove("online");
+          statusDot.style.backgroundImage = "url('offline.png')";
+          statusDot.style.backgroundColor = "transparent";
+        }
+      });
+      div.appendChild(statusDot);
+
+      const pseudoEl = document.createElement("div");
+      pseudoEl.classList.add("pseudo");
+      pseudoEl.textContent = data.pseudo || friendId;
+      div.appendChild(pseudoEl);
+
+      const idEl = document.createElement("div");
+      idEl.classList.add("id");
+      idEl.textContent = friendId;
+      div.appendChild(idEl);
+
+      return div;
+    }
+
+    // === Charger demandes et amis et mettre à jour en temps réel ===
+    function updatePendingFriends() {
+      // On écoute toutes les demandes reçues vers currentUserId
+      db.ref(`friendRequests/${currentUserId}`).on("value", snapshot => {
+        pendingFriendsDiv.innerHTML = "";
+        const val = snapshot.val() || {};
+        for (const friendId in val) {
+          const data = val[friendId];
+          pendingFriendsDiv.appendChild(createPendingFriendElement(friendId, data));
+        }
       });
     }
+
+    function updateFriendsList() {
+      db.ref(`friends/${currentUserId}`).on("value", snapshot => {
+        friendsListDiv.innerHTML = "";
+        const val = snapshot.val() || {};
+        for (const friendId in val) {
+          const data = val[friendId];
+          friendsListDiv.appendChild(createFriendElement(friendId, data));
+        }
+      });
+    }
+
+    updatePendingFriends();
+    updateFriendsList();
+
   </script>
 </body>
 </html>
