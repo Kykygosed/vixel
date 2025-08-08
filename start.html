@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Création de compte héhé</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      transition: 0.5s;
+    }
+
+    #container {
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+      transition: opacity 0.5s;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: gray;
+      margin-bottom: 30px;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 100%;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    .blue {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .red {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    img {
+      max-width: 100px;
+      border-radius: 50%;
+      margin: 15px auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+
+  <!-- Firebase -->
+<!-- Firebase App (base) -->
+
+
+
+  <script>
+    // Firebase config
+   const firebaseConfig = {
+  apiKey: "AIzaSyBPq6Wfxzq02MfK69BFxHm9_FUjDGTmAcw",
+  authDomain: "kykychat-24c7f.firebaseapp.com",
+  databaseURL: "https://kykychat-24c7f-default-rtdb.firebaseio.com",
+  projectId: "kykychat-24c7f",
+  storageBucket: "kykychat-24c7f.firebasestorage.app",
+  messagingSenderId: "342562811927",
+  appId: "1:342562811927:web:0fed1e1f511c4fddcfec52"
+};
+    firebase.initializeApp(firebaseConfig);
+
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    let userId = null;
+    let step = 0;
+    let data = {
+      pseudo: "",
+      id: "",
+      pdp: ""
+    };
+
+    auth.onAuthStateChanged(user => {
+      if (!user) return window.location.href = "login.html";
+      userId = user.uid;
+      renderStep();
+    });
+
+    function renderStep() {
+      const c = document.getElementById("container");
+      c.style.opacity = 0;
+      setTimeout(() => {
+        c.innerHTML = "";
+
+        if (step === 0) {
+          c.innerHTML = `
+            <h1>Bienvenue!</h1>
+            <p>Laisse nous t'aider à faire ton compte</p>
+            <button class="blue" onclick="next()">Continuer</button>
+          `;
+        } else if (step === 1) {
+          c.innerHTML = `
+            <h1>Choisis ton pseudo!</h1>
+            <input type="text" id="pseudo" placeholder="Ex: kykygosed" />
+            <button class="blue" onclick="savePseudo()">Continuer</button>
+            <button class="red" onclick="prev()">Retour</button>
+          `;
+        } else if (step === 2) {
+          c.innerHTML = `
+            <h1>Choisis ton identifiant!</h1>
+            <input type="text" id="identifiant" placeholder="Ex: kykygosed01" />
+            <button class="blue" onclick="saveID()">Continuer</button>
+            <button class="red" onclick="prev()">Retour</button>
+          `;
+        } else if (step === 3) {
+          c.innerHTML = `
+            <h1>Souhaites-tu ajouter une photo de profil ?</h1>
+            <input type="text" id="pdp" placeholder="URL de la photo (optionnel)" />
+            <button class="blue" onclick="savePDP()">Vérifier</button>
+            <button class="red" onclick="prev()">Retour</button>
+          `;
+        } else if (step === 4) {
+          c.innerHTML = `
+            <h1>Une dernière vérif?</h1>
+            ${data.pdp ? `<img src="${data.pdp}" alt="Photo">` : "<p>(Pas de photo)</p>"}
+            <p><strong>Pseudo :</strong> ${data.pseudo}</p>
+            <p><strong>ID :</strong> ${data.id}</p>
+            <button class="blue" onclick="finish()">Confirmer!</button>
+            <button class="red" onclick="prev()">Retour</button>
+          `;
+        }
+
+        c.style.opacity = 1;
+      }, 300);
+    }
+
+    function next() {
+      step++;
+      renderStep();
+    }
+
+    function prev() {
+      step--;
+      renderStep();
+    }
+
+    function savePseudo() {
+      const val = document.getElementById("pseudo").value.trim();
+      if (!val) return alert("Entre un pseudo valide");
+      data.pseudo = val;
+      db.ref(`accounts/${userId}/pseudo`).set(val);
+      next();
+    }
+
+    function saveID() {
+      const val = document.getElementById("identifiant").value.trim();
+      if (!val) return alert("Entre un identifiant valide");
+      data.id = val;
+      db.ref(`accounts/${userId}/ID`).set(val);
+      next();
+    }
+
+    function savePDP() {
+      const val = document.getElementById("pdp").value.trim();
+      data.pdp = val;
+      if (val) db.ref(`accounts/${userId}/pdp`).set(val);
+      next();
+    }
+
+    function finish() {
+      window.location.href = "home.html";
+    }
+  </script>
+</body>
+</html>
