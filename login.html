@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Connexion / Inscription | Kylita</title>
+
+  <!-- Firebase App (core SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+      width: 380px;
+      max-width: 90vw;
+      padding: 40px 30px;
+      position: relative;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-bottom: 5px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      user-select: none;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      padding: 12px 15px;
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      outline: none;
+      transition: box-shadow 0.3s ease;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+    }
+
+    input[type="email"]::placeholder,
+    input[type="password"]::placeholder {
+      color: #ddd;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      box-shadow: 0 0 8px 2px #a18cd1;
+      background: rgba(255,255,255,0.3);
+    }
+
+    button {
+      padding: 15px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: #845ef7;
+      border: none;
+      border-radius: 25px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      user-select: none;
+      box-shadow: 0 5px 15px rgba(132,94,247,0.6);
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #6f42c1;
+      box-shadow: 0 8px 25px rgba(111,66,193,0.8);
+    }
+
+    .toggle-link {
+      margin-top: 25px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #d3cfff;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.3s ease;
+      text-decoration: underline;
+    }
+
+    .toggle-link:hover {
+      color: #fff;
+    }
+
+    .message {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 8px 12px;
+      border-radius: 12px;
+      user-select: none;
+    }
+
+    .message.error {
+      background: #ff4d6d;
+      box-shadow: 0 0 10px #ff4d6d;
+      color: #fff;
+    }
+
+    .message.success {
+      background: #4CAF50;
+      box-shadow: 0 0 10px #4caf50;
+      color: #fff;
+    }
+
+    /* Animation */
+    .form-wrapper {
+      overflow: hidden;
+      height: 300px;
+      position: relative;
+    }
+
+    form {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      transition: transform 0.5s ease;
+    }
+
+    form.signup {
+      transform: translateX(380px);
+    }
+
+    form.active {
+      transform: translateX(0);
+    }
+
+    .form-wrapper.active form.signup {
+      transform: translateX(0);
+    }
+
+    .form-wrapper.active form.login {
+      transform: translateX(-380px);
+    }
+
+    /* Responsive */
+    @media (max-width: 420px) {
+      .container {
+        width: 100vw;
+        border-radius: 0;
+        padding: 30px 20px;
+      }
+
+      .form-wrapper {
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="form-title">Connexion</h2>
+
+    <div class="form-wrapper" id="form-wrapper">
+      <!-- Login form -->
+      <form id="login-form" class="login active" autocomplete="off">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" placeholder="exemple@mail.com" required />
+        
+        <label for="login-password">Mot de passe</label>
+        <input type="password" id="login-password" placeholder="Votre mot de passe" required />
+
+        <button type="submit">Se connecter</button>
+      </form>
+
+      <!-- Signup form -->
+      <form id="signup-form" class="signup" autocomplete="off">
+        <label for="signup-email">Email</label>
+        <input type="email" id="signup-email" placeholder="exemple@mail.com" required />
+
+        <label for="signup-password">Mot de passe</label>
+        <input type="password" id="signup-password" placeholder="Votre mot de passe" required />
+
+        <label for="signup-password-confirm">Confirmer mot de passe</label>
+        <input type="password" id="signup-password-confirm" placeholder="Confirmez le mot de passe" required />
+
+        <button type="submit">S'inscrire</button>
+      </form>
+    </div>
+
+    <div class="toggle-link" id="toggle-link">Pas de compte ? S'inscrire</div>
+    <div id="message" class="message" style="display:none;"></div>
+  </div>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDyWu4TI4PIRXfeb7yqt0WIGClgu10IjkM",
+      authDomain: "kylita-f2923.firebaseapp.com",
+      databaseURL: "https://kylita-f2923-default-rtdb.firebaseio.com",
+      projectId: "kylita-f2923",
+      storageBucket: "kylita-f2923.firebasestorage.app",
+      messagingSenderId: "431823530994",
+      appId: "1:431823530994:web:88a07e633751686e5ad96b",
+      measurementId: "G-F4LLNWQJ16"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    const toggleLink = document.getElementById('toggle-link');
+    const formWrapper = document.getElementById('form-wrapper');
+    const formTitle = document.getElementById('form-title');
+    const messageBox = document.getElementById('message');
+
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+
+    // Switch login/signup forms
+    toggleLink.addEventListener('click', () => {
+      if (formWrapper.classList.contains('active')) {
+        // Currently signup shown -> switch to login
+        formWrapper.classList.remove('active');
+        formTitle.textContent = "Connexion";
+        toggleLink.textContent = "Pas de compte ? S'inscrire";
+        clearMessages();
+        loginForm.reset();
+        signupForm.reset();
+      } else {
+        // Show signup
+        formWrapper.classList.add('active');
+        formTitle.textContent = "Inscription";
+        toggleLink.textContent = "Déjà un compte ? Se connecter";
+        clearMessages();
+        loginForm.reset();
+        signupForm.reset();
+      }
+    });
+
+    function showMessage(msg, type = 'error') {
+      messageBox.textContent = msg;
+      messageBox.className = 'message ' + (type === 'success' ? 'success' : 'error');
+      messageBox.style.display = 'block';
+    }
+    function clearMessages() {
+      messageBox.textContent = '';
+      messageBox.style.display = 'none';
+    }
+
+    // LOGIN
+    loginForm.addEventListener('submit', e => {
+      e.preventDefault();
+      clearMessages();
+
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      if (!email || !password) {
+        showMessage('Veuillez remplir tous les champs.');
+        return;
+      }
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          showMessage('Connexion réussie, redirection...', 'success');
+          // Redirection ou autre action ici
+          setTimeout(() => {
+            window.location.href = 'home.html'; // Modifier selon ton besoin
+          }, 1200);
+        })
+        .catch(error => {
+          showMessage(error.message);
+        });
+    });
+
+    // SIGNUP
+    signupForm.addEventListener('submit', e => {
+      e.preventDefault();
+      clearMessages();
+
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const confirmPassword = document.getElementById('signup-password-confirm').value;
+
+      if (!email || !password || !confirmPassword) {
+        showMessage('Veuillez remplir tous les champs.');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showMessage('Les mots de passe ne correspondent pas.');
+        return;
+      }
+
+      if (password.length < 6) {
+        showMessage('Le mot de passe doit contenir au moins 6 caractères.');
+        return;
+      }
+
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          showMessage('Inscription réussie, vous êtes connecté !', 'success');
+          setTimeout(() => {
+            window.location.href = 'home.html'; // Modifier selon ton besoin
+          }, 1400);
+        })
+        .catch(error => {
+          showMessage(error.message);
+        });
+    });
+  </script>
+</body>
+</html>
